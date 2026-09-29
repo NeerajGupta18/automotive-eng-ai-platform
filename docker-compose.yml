@@ -1,20 +1,39 @@
+# Production-oriented defaults: authentication enforced, JSON logs, unprivileged container, ports bound to localhost.
+# Put a TLS-terminating reverse proxy (nginx, Caddy, Traefik) in front and publish only that.
+# NOTE: this file has not been built or run in the development sandbox (no Docker there): run `docker compose config` and a smoke test first.
 services:
   api:
     build: .
     env_file: [.env]
     environment:
       DATA_DIR: /data
+      AUTH_MODE: ${AUTH_MODE:-enforced}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}          # empty = a token is generated and printed once in the log (docker compose logs api)
+      LOG_FORMAT: ${LOG_FORMAT:-json}
       OLLAMA_URL: http://ollama:11434
     volumes: ["./storage:/data"]
-    ports: ["8000:8000"]
+    ports: ["${API_BIND:-127.0.0.1}:8000:8000"]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp"]
 
   ui:
     build: .
-    command: streamlit run ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    command: streamlit run ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --browser.gatherUsageStats false
     environment:
-      API_URL: http://api:8000
-    ports: ["8501:8501"]
+      API_URL: http://api:8000               # users sign in with their own API token in the sidebar
+    ports: ["${UI_BIND:-127.0.0.1}:8501:8501"]
     depends_on: [api]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp", "/home/app"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=4).status == 200 else 1)"]
+      interval: 30s
 
   # Optional local LLM:  docker compose --profile llm up
   #   then: docker compose exec ollama ollama pull llama3.1:8b   and set LLM_BACKEND=ollama in .env
@@ -22,7 +41,10 @@ services:
     image: ollama/ollama
     profiles: ["llm"]
     volumes: ["ollama:/root/.ollama"]
-    ports: ["11434:11434"]
 
 volumes:
   ollama:
+
+# Backups (run on the host, e.g. from cron):
+#   docker compose exec api python scripts/manage.py backup /data/backups/platform-$(date +%F).tar.gz
+#   docker compose exec api python scripts/manage.py verify-audit

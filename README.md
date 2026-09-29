@@ -88,6 +88,39 @@ Pipeline: **C sources + static-analysis logs → rule analysis → corroboration
 
 **Honest scope:** this is a heuristic analyzer without a compiler front end, type information or data-flow engine, so it produces false positives and misses things a certified tool would catch. It is **not a MISRA compliance checker**: rule text is original, MISRA numbers are informational and must be verified against your licensed copy. Use it to complement, not replace, a qualified static analyzer and human review.
 
+## Security, operations and deployment (Stage 5)
+
+### Authentication and access control
+`AUTH_MODE=off` (the default) is a **development mode**: the `X-User` header is trusted, so anybody can claim any identity, and there is no access control. **Use `AUTH_MODE=enforced` for anything shared.** In that mode:
+
+- **Identity is bound to an API token** (`Authorization: Bearer ...`). The `X-User` header is ignored, so the **four-eyes approvals of Stages 2-4 can no longer be bypassed by claiming another name** (asserted in tests: a reviewer who sends `X-User: bob` is still blocked from approving their own assessment). Tokens are 256-bit random values shown once; only their SHA-256 is stored; they expire (`TOKEN_TTL_DAYS`), can be rotated and disabled. Tokens in query strings are never accepted.
+- **Per-project roles**: `viewer` (read) < `engineer` (create, edit, generate, analyze) < `reviewer` (approve decisions, load knowledge libraries, view the audit log) < `admin` (manage members, delete). Platform role `admin` manages users and sees all projects; a user who creates a project administers it. Non-members receive **404**, so a project's existence is not revealed.
+- **Deny by default**: every request is classified from its method and path; anything not recognised as a read needs at least `write`. A test enumerates **every route in the OpenAPI schema** so a new endpoint cannot silently be more open than intended, and asserts exactly which POSTs are read-only (queries, validation, simulation).
+- **Hardening**: per-user rate limit and a lockout for repeated failed logins per client address (429 + `Retry-After`), request-size limit that also covers **chunked uploads**, security headers, request IDs (sanitised), and generic 500 responses (no stack traces or paths to the client; details go to the log). Denied and failed requests are audited; presented tokens are never logged or stored (asserted).
+- **Bootstrap**: the first start creates the `admin` user from `ADMIN_TOKEN`, or generates a token and prints it once. `python scripts/manage.py create-user|rotate|disable|grant ...` manages users offline. Configuration is validated at start (`manage.py check-config`); a too-short admin token or an unknown mode refuses to start.
+
+### Tamper-evident audit log
+Each audit row commits to the previous one (SHA-256 chain, written under `BEGIN IMMEDIATE`). `GET /admin/audit/verify` (or `manage.py verify-audit`, exit code 1 on failure) detects **edited, deleted and injected rows**. Rows written before Stage 5 are reported as *legacy* (cannot be verified). A chain proves internal consistency; **truncating the newest entries is only detectable if you record the head hash outside this system** (`/admin/audit/verify` returns it), so anchor it periodically in a ticket or write-once storage.
+
+### Observability
+Structured logs (`LOG_FORMAT=json`) with request ID, user, route template, status and latency; `GET /metrics` (admin only) in Prometheus format: request counts and latency histograms by **route template** (low cardinality), authentication and rate-limit events, LLM call counts/latency/errors, users, records and audit rows; `GET /ready` (database, writable storage, embedder; 503 when not ready) and `GET /health` (anonymous callers see only `status` and `auth`); `GET /system/info` (admin) lists limits and configuration warnings, e.g. that a non-local LLM sends prompts off the machine.
+
+### Operations
+- **Schema migrations** are numbered and idempotent (`schema_version`); a Stage 1-4 database is upgraded in place (tested on a database built with the old schema).
+- **Backup and restore** (`manage.py backup|restore`): consistent SQLite snapshot (online backup API) plus uploads, parsed text and vector files with a SHA-256 manifest. Restore refuses path traversal, absolute paths, links, missing or extra files and any integrity mismatch, never overwrites existing data without `--force` (the old data is kept), then re-runs migrations and audit verification. Backups are `0600`; **encrypt them at rest yourself**.
+- **Reindex** (`manage.py reindex`) rebuilds vector collections from stored text, e.g. after changing the embedding model or restoring without a consistent vector copy.
+- **Packaging**: unprivileged container user, read-only root filesystem, dropped capabilities, health checks, JSON logs, ports bound to localhost by default. Put a **TLS-terminating reverse proxy** in front (the app does not terminate TLS) and set uvicorn's `--forwarded-allow-ips` to the proxy so per-client limits see real addresses. **The Docker files and the CI `docker` job were not built or run in the development sandbox**: run `docker compose config` and a smoke test first.
+
+### Cross-module traceability (UI page *Traceability*, API `/projects/{p}/trace/...`)
+One graph links hazards, events, goals, requirements, threats, tests, code findings and architecture elements. `GET .../trace/nodes/{ref}` returns everything upstream and downstream of any item with module, status and hop count; `GET .../trace/suspect` is the **worklist of everything in any module that needs re-review** after an upstream change; `summary` lists requirements without verification, allocation or with open code-review findings; `graph?around=REF` renders the neighbourhood (suspect nodes highlighted).
+
+### What this does not do (read before deploying)
+- **No SSO/OIDC or MFA**: authentication is by API token. In an enterprise, put the service behind your identity-aware gateway and map identities to tokens; Streamlit keeps the token in the browser session.
+- **Single process**: SQLite, the in-memory rate limiter and the audit chain assume one server process. For several workers or high availability move to PostgreSQL and a shared limiter.
+- **No encryption at rest and no per-project cryptographic isolation**: use disk/volume encryption; isolation between projects is enforced by application checks and separate vector collections.
+- **RBAC is only as strong as its deployment**: whoever has file access to the data directory or the database can bypass it. The audit chain makes tampering detectable, not impossible.
+- **Rule sets, libraries and the UDS oracle still need domain review** (Stages 2-4). The default `mock` LLM is not a language model.
+
 ## Architecture
 
 ```mermaid
@@ -110,17 +143,19 @@ app/
   container.py         wires shared services (modules plug in here)
   core/                llm · embeddings · vectorstore · parsing · chunking · rag · documents · db
                        trace (traceability graph) · workflow (four-eyes, suspect propagation) · reqquality
+                       auth (tokens, roles, limiter) · observability (logs, metrics) · maintenance (backup, restore, reindex) · tracequery
   modules/hld/         extractor · analysis · service
   modules/hara/        rules (ASIL) · templates · service
   modules/tara/        rules (risk) · architecture · service
   modules/uds/         spec · engine (oracle) · testgen · simulator · harness_template · export · service   
   modules/codereview/  analyzer (28 rules) · logs · fixes · sarif · service
-  api/                 main · hld routes · hara · tara · uds · codereview · deps
+  api/                 main · hld routes · hara · tara · uds · codereview · admin · trace · security (guard/RBAC) · deps
 ui/streamlit_app.py    HLD page (main)
-ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py · 5_Secure_Code_Review.py
+ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py · 5_Secure_Code_Review.py · 6_Traceability.py · 7_Administration.py
+scripts/               manage.py (users, backup/restore, reindex, verify-audit) · review_gate.py (CI) · seed_demo.py
 data/library/          synthetic hazard and threat libraries (versioned, owner + review date)
 data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json), C code samples with planted defects + tool logs
-tests/                 248 tests; every store test runs on both NumPy and ChromaDB
+tests/                 313 tests; every store test runs on both NumPy and ChromaDB
 ```
 
 ## Quick start
@@ -184,12 +219,12 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 |---|---|
 | Incorrect extraction from tables/diagrams | Page-level source refs; review queue; PDF↔MD parity tests |
 | Hallucinated relationships | Extraction is rule-based; Q&A refuses on weak evidence; citation validation |
-| Unauthorized access across programs | Per-project collections + ownership checks (RBAC/IAM is Stage 5) |
+| Unauthorized access across programs | Per-project collections, API-token authentication and per-project RBAC (`AUTH_MODE=enforced`); non-members get 404 |
 | Outdated document versions | Version labels, approved-only search, checksum de-duplication |
 
 ## Testing
 
-`python -m pytest -q` runs 248 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage. Stage 4: every rule with a positive case and a false-positive guard, masking of comments/strings, fuzzing and performance, fingerprint stability, cppcheck/SARIF/text parsers and XML-entity rejection, verified fixes (including a patch that must be rejected), findings lifecycle (fixed/reopened/line shifts/stale logs), four-eyes triage, LLM guardrails (fabricated evidence dropped, redaction, external-backend gate), HLD/HARA enrichment, quality gate, SARIF, CLI exit codes.
+`python -m pytest -q` runs 313 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage. Stage 4: every rule with a positive case and a false-positive guard, masking of comments/strings, fuzzing and performance, fingerprint stability, cppcheck/SARIF/text parsers and XML-entity rejection, verified fixes (including a patch that must be rejected), findings lifecycle (fixed/reopened/line shifts/stale logs), four-eyes triage, LLM guardrails (fabricated evidence dropped, redaction, external-backend gate), HLD/HARA enrichment, quality gate, SARIF, CLI exit codes. Stage 5: route classification table and an OpenAPI-wide deny-by-default check, token lifecycle (rotate, disable, expire, only a hash stored), the role matrix, non-member 404s, token-bound four-eyes (spoofed `X-User` fails), failed-login lockout and rate limits, streamed-body size limit, headers and generic 500s, audit-chain tamper/deletion/injection detection and concurrency, low-cardinality metrics, log hygiene (no tokens), migration of a Stage-4 database, backup/restore round trip and hostile archives (traversal, symlink, tampering), reindex, readiness, the management CLI, and cross-module trace and re-review worklist.
 
 **Verified in development:** the full automated suite, plus the Streamlit UI driven headlessly (Streamlit `AppTest`) against a live API.
 **Not verified here:** a real LLM (Ollama/vLLM), sentence-transformers embeddings, and the Docker build. Run these once on your machine before a demo.
@@ -198,7 +233,6 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 
 - Heading detection in PDFs is text-pattern based (numbered/`#` headings); documents with unusual layouts may need a taxonomy tweak in `Taxonomy` (`extractor.py`).
 - Diagrams inside PDFs are not interpreted (only text/tables/OCR).
-- Authentication is a header (`X-User`) for audit attribution only; real IAM/RBAC is a Stage-5 item.
 - Sample documents and both libraries are synthetic. No licensed standards text is included.
 - Library retrieval with the offline hash embedder is lexical and can surface loosely related entries; use BGE/E5 embeddings for better similarity. Similar hazards are always shown as suggestions, never applied automatically.
 - TARA threat generation is taxonomy-driven (asset kind × interface). Anything the library does not cover is reported (*assets without threats*, coverage gaps) rather than invented.
@@ -212,4 +246,4 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - [x] Stage 2: HARA (deterministic S/E/C→ASIL, safety goals, FSR/TSR drafts, allocation, change impact) and TARA (assets, attack surface, threat library, risk, controls, coverage)
 - [x] Stage 3: UDS (spec extraction, response oracle, request validation, test generation, simulator with fault injection, Python/CAPL export)
 - [x] Stage 4: Secure code review (28-rule analyzer, tool-log ingestion, findings lifecycle, verified fixes, opt-in LLM review, quality gate, SARIF)
-- [ ] Stage 5: traceability graph, RBAC, observability, packaging
+- [x] Stage 5: RBAC and API-token authentication, tamper-evident audit, observability, migrations, backup/restore, cross-module traceability, hardened packaging

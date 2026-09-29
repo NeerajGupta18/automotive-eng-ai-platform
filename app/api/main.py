@@ -1,5 +1,6 @@
-"""FastAPI service layer. Every mutating call records the acting user (X-User header)
-in the audit log. Real authentication/RBAC is a Stage-5 item (see README)."""
+"""FastAPI service layer. Every mutating call records the acting user in the audit log.
+AUTH_MODE=off: the X-User header is trusted (development). AUTH_MODE=enforced: identity comes from an API token and
+every request passes RBAC (see app/api/security.py)."""
 from __future__ import annotations
 
 import re
@@ -59,14 +60,23 @@ def create_app(container: Container | None = None) -> FastAPI:
     from app.api import codereview as cr_api
     app.include_router(cr_api.router)
     app.include_router(cr_api.public)
+    from app.api import admin as admin_api, trace as trace_api
+    app.include_router(admin_api.router)
+    app.include_router(trace_api.router)
+    from app.api.security import BodyLimit, install as install_security
+    from app.config import get_settings
+    cfg = container.settings if container else get_settings()
+    install_security(app, cfg)
+    app.add_middleware(BodyLimit, max_bytes=cfg.max_request_mb * 1024 * 1024)
 
     def c(request: Request) -> Container:
         if request.app.state.container is None:      # lazy: built on first request
             request.app.state.container = Container()
         return request.app.state.container
 
-    def actor(x_user: str = Header(default="anonymous")) -> str:
-        return x_user[:64]
+    def actor(request: Request, x_user: str = Header(default="anonymous")) -> str:
+        from app.core.observability import clean_id
+        return getattr(request.state, "auth_user", None) or clean_id(x_user) or "anonymous"
 
     def need_project(cont: Container, name: str) -> None:
         if not cont.db.project_exists(name):
@@ -80,22 +90,35 @@ def create_app(container: Container | None = None) -> FastAPI:
 
     # ------------------------------------------------------------ system
     @app.get("/health")
-    def health(cont: Container = Depends(c)):
+    def health(request: Request, cont: Container = Depends(c)):
         s = cont.settings
-        return {"status": "ok", "llm": cont.llm.name, "embeddings": s.embed_backend, "vector_store": s.vector_backend}
+        out = {"status": "ok", "auth": s.auth_mode}
+        if s.auth_mode != "enforced" or request.state.auth_user:          # configuration details only for authenticated callers
+            out.update({"llm": cont.llm.name, "embeddings": s.embed_backend, "vector_store": s.vector_backend})
+        return out
 
     # ------------------------------------------------------------ projects
     @app.post("/projects", status_code=201)
     def create_project(p: ProjectIn, cont: Container = Depends(c), user: str = Depends(actor)):
         if not PROJECT_RE.match(p.name):
             raise HTTPException(422, "Project name: 2-64 chars, letters/digits/_-. only")
+        if cont.db.project_exists(p.name):
+            raise HTTPException(409, f"Project '{p.name}' already exists")
         cont.db.create_project(p.name)
         cont.db.audit(user, "project.create", p.name)
+        if cont.settings.auth_mode == "enforced" and cont.db._q("SELECT 1 FROM users WHERE name=?", (user,)):
+            cont.auth.set_member(p.name, user, "admin", user)               # the creator administers the project
         return {"name": p.name}
 
     @app.get("/projects")
-    def list_projects(cont: Container = Depends(c)):
-        return cont.db.projects()
+    def list_projects(request: Request, cont: Container = Depends(c)):
+        rows = cont.db.projects()
+        auth = request.state.auth
+        if cont.settings.auth_mode == "enforced" and auth:
+            visible = cont.auth.visible_projects(auth)
+            if visible is not None:
+                rows = [r for r in rows if r["name"] in visible]
+        return rows
 
     # ------------------------------------------------------------ documents
     @app.post("/projects/{project}/documents", status_code=201)

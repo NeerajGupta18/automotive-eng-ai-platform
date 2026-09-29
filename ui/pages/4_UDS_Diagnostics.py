@@ -196,15 +196,12 @@ with t_exp:
     cols = st.columns(4)
     for i, (fmt, label, mime) in enumerate([("bundle", "⬇ Bundle (zip)", "application/zip"), ("python", "⬇ pytest file", "text/x-python"), ("harness", "⬇ Harness", "text/x-python"),
                                              ("capl", "⬇ CAPL (experimental)", "text/plain"), ("csv", "⬇ CSV", "text/csv"), ("json", "⬇ JSON", "application/json")]):
-        try:
-            import requests as _rq
-            r = _rq.get(f"{common.API_URL}{D}/specs/{ref}/export", params={"format": fmt, "include_unapproved": inc}, headers={"X-User": st.session_state.get("user", "engineer")}, timeout=60)
-        except Exception:
-            r = None
-        if r is not None and r.ok:
-            cols[i % 4].download_button(label, r.content, file_name=f"uds_{ref}.{ 'zip' if fmt == 'bundle' else 'py' if fmt in ('python', 'harness') else fmt if fmt != 'capl' else 'can'}", mime=mime, key=f"dl_{fmt}")
-        elif r is not None:
-            cols[i % 4].caption(f"{fmt}: {r.json().get('detail', 'not available')}")
+        r = common.raw_get(f"{D}/specs/{ref}/export", format=fmt, include_unapproved=inc)
+        ext = "zip" if fmt == "bundle" else "py" if fmt in ("python", "harness") else "can" if fmt == "capl" else fmt
+        if r is not None:
+            cols[i % 4].download_button(label, r.content, file_name=f"uds_{ref}.{ext}", mime=mime, key=f"dl_{fmt}")
+        else:
+            cols[i % 4].caption(f"{fmt}: not available yet (approve tests first, or tick the draft option)")
     rep = api("GET", f"{D}/specs/{ref}/report", expect_json=False)
     if rep:
         with st.expander("Test specification report (Markdown)"):

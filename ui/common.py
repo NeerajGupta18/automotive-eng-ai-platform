@@ -13,21 +13,37 @@ def setup(title: str) -> None:
     st.set_page_config(page_title=f"{title} · Automotive Engineering AI", page_icon="🚗", layout="wide")
 
 
-def api(method: str, path: str, *, expect_json: bool = True, **kw):
-    headers = {"X-User": st.session_state.get("user", "engineer")}
+def _headers() -> dict:
+    """Bearer token when signed in (AUTH_MODE=enforced); the X-User header is only used in development mode."""
+    token = st.session_state.get("token") or os.getenv("API_TOKEN", "")
+    return {"Authorization": f"Bearer {token}"} if token else {"X-User": st.session_state.get("user", "engineer")}
+
+
+def api(method: str, path: str, *, expect_json: bool = True, quiet: bool = False, **kw):
     try:
-        r = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=300, **kw)
+        r = requests.request(method, f"{API_URL}{path}", headers=_headers(), timeout=300, **kw)
     except requests.RequestException as e:
-        st.error(f"Cannot reach the API at {API_URL}: {e}")
+        if not quiet:
+            st.error(f"Cannot reach the API at {API_URL}: {e}")
         return None
     if not r.ok:
-        try:
-            detail = r.json().get("detail", r.text)
-        except ValueError:
-            detail = r.text
-        st.error(f"{r.status_code}: {detail}")
+        if not quiet:
+            try:
+                detail = r.json().get("detail", r.text)
+            except ValueError:
+                detail = r.text
+            st.error(f"{r.status_code}: {detail}")
         return None
     return r.json() if expect_json else r.text
+
+
+def raw_get(path: str, **params):
+    """GET returning the response (for downloads); None on failure."""
+    try:
+        r = requests.get(f"{API_URL}{path}", params=params, headers=_headers(), timeout=60)
+    except requests.RequestException:
+        return None
+    return r if r.ok else None
 
 
 def do(method: str, path: str, **kw) -> None:
@@ -39,10 +55,21 @@ def do(method: str, path: str, **kw) -> None:
 def sidebar(module_note: str) -> str | None:
     with st.sidebar:
         st.title("🚗 Automotive Engineering AI")
-        st.session_state["user"] = st.text_input("Your name (audit log, four-eyes approval)",
-                                                 value=st.session_state.get("user", "engineer"))
-        health = api("GET", "/health")
-        if health:
+        health = api("GET", "/health", quiet=True)
+        if health and health.get("auth") == "enforced":
+            st.session_state["token"] = st.text_input("API token", type="password", value=st.session_state.get("token", os.getenv("API_TOKEN", "")))
+            me = api("GET", "/me", quiet=True) if st.session_state["token"] else None
+            if not me:
+                st.warning("Sign in with your API token (ask a platform administrator).")
+                st.stop()
+            st.session_state["user"], st.session_state["me"] = me["name"], me
+            st.success(f"Signed in as **{me['name']}** ({me['role']})")
+            health = api("GET", "/health", quiet=True) or health
+        else:
+            st.session_state["user"] = st.text_input("Your name (audit log, four-eyes approval)", value=st.session_state.get("user", "engineer"))
+            st.session_state["me"] = {"name": st.session_state["user"], "role": "admin", "auth": "off"}
+            st.caption("⚠ Development mode: identities are not authenticated.")
+        if health and "llm" in health:
             st.caption(f"LLM: **{health['llm']}** · Embeddings: **{health['embeddings']}** · Vector DB: **{health['vector_store']}**")
         projects = api("GET", "/projects") or []
         names = [p["name"] for p in projects]

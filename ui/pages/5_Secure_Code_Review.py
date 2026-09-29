@@ -7,7 +7,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
-import requests
 import streamlit as st
 
 import common
@@ -167,11 +166,8 @@ with t_gate:
 with t_rep:
     cols = st.columns(4)
     for col, (fmt, label, mime) in zip(cols, [("md", "⬇ Report (md)", "text/markdown"), ("csv", "⬇ CSV", "text/csv"), ("json", "⬇ JSON", "application/json"), ("sarif", "⬇ SARIF", "application/json")]):
-        try:
-            r = requests.get(f"{common.API_URL}{C}/report", params={"format": fmt}, headers={"X-User": st.session_state.get("user", "engineer")}, timeout=60)
-        except requests.RequestException:
-            r = None
-        if r is not None and r.ok:
+        r = common.raw_get(f"{C}/report", format=fmt)
+        if r is not None:
             col.download_button(label, r.text, file_name=f"code_review.{fmt}", mime=mime, key=f"dl_{fmt}")
     with st.expander("Rule catalogue"):
         rules = api("GET", "/codereview/rules") or []

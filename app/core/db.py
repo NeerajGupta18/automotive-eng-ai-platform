@@ -2,6 +2,7 @@
 (PostgreSQL is the production option; the schema is deliberately plain SQL.)"""
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import threading
@@ -37,6 +38,49 @@ CREATE TABLE IF NOT EXISTS audit(
 """
 
 
+# ------------------------------------------------------------------ migrations
+# SCHEMA above is the Stage 1-4 baseline. Every later change is a numbered, idempotent migration, so an existing
+# database is upgraded in place and the version is recorded in schema_version.
+def _cols(conn, table: str) -> set[str]:
+    return {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def _m_audit_chain(conn) -> None:
+    for col in ("prev_hash", "hash"):
+        if col not in _cols(conn, "audit"):
+            conn.execute(f"ALTER TABLE audit ADD COLUMN {col} TEXT")
+
+
+def _m_auth(conn) -> None:
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS users(
+        name TEXT PRIMARY KEY, role TEXT NOT NULL, key_hash TEXT NOT NULL UNIQUE, key_prefix TEXT,
+        created_at TEXT NOT NULL, created_by TEXT, expires_at TEXT, disabled INTEGER NOT NULL DEFAULT 0, last_used TEXT);
+    CREATE TABLE IF NOT EXISTS memberships(
+        user TEXT NOT NULL, project TEXT NOT NULL, role TEXT NOT NULL, granted_by TEXT, granted_at TEXT NOT NULL,
+        PRIMARY KEY(user, project));
+    """)
+
+
+MIGRATIONS = [(1, "baseline (stages 1-4)", lambda conn: None),
+              (2, "hash-chained audit log", _m_audit_chain),
+              (3, "users and project memberships", _m_auth)]
+SCHEMA_VERSION = MIGRATIONS[-1][0]
+
+
+def migrate(conn) -> list[int]:
+    conn.execute("CREATE TABLE IF NOT EXISTS schema_version(version INTEGER PRIMARY KEY, description TEXT, applied_at TEXT)")
+    done = {r[0] for r in conn.execute("SELECT version FROM schema_version")}
+    applied = []
+    for v, desc, fn in MIGRATIONS:
+        if v not in done:
+            fn(conn)
+            conn.execute("INSERT INTO schema_version VALUES(?,?,?)", (v, desc, now()))
+            applied.append(v)
+    conn.commit()
+    return applied
+
+
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -49,6 +93,7 @@ class Database:
         self._lock = threading.RLock()
         with self._lock:
             self._conn.executescript(SCHEMA)
+            self.migrations_applied = migrate(self._conn)
 
     def _q(self, sql: str, args: tuple = ()) -> list[dict]:
         with self._lock:
@@ -131,16 +176,57 @@ class Database:
                 (status, reviewer, comment, now(), review_id))
 
     # ---- audit
+    @staticmethod
+    def _audit_hash(prev: str, row: list) -> str:
+        return hashlib.sha256((prev + json.dumps(row, separators=(",", ":"), ensure_ascii=False)).encode()).hexdigest()
+
     def audit(self, actor: str, action: str, project: str | None = None, entity: str | None = None,
               detail: dict | str | None = None) -> None:
+        """Append-only, hash-chained: each row commits to the previous row, so edits, deletions and reordering are
+        detectable by verify_audit(). BEGIN IMMEDIATE keeps the chain linear even with several processes."""
         d = detail if isinstance(detail, str) or detail is None else json.dumps(detail)
-        self._q("INSERT INTO audit(ts,actor,project,action,entity,detail) VALUES(?,?,?,?,?,?)",
-                (now(), actor, project, action, entity, d))
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                last = self._conn.execute("SELECT hash FROM audit WHERE hash IS NOT NULL ORDER BY id DESC LIMIT 1").fetchone()
+                prev, ts = (last[0] if last else "GENESIS"), now()
+                h = self._audit_hash(prev, [ts, actor, project, action, entity, d])
+                self._conn.execute("INSERT INTO audit(ts,actor,project,action,entity,detail,prev_hash,hash) VALUES(?,?,?,?,?,?,?,?)",
+                                   (ts, actor, project, action, entity, d, prev, h))
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
 
-    def audit_log(self, project: str | None = None, limit: int = 200) -> list[dict]:
-        if project:
-            return self._q("SELECT * FROM audit WHERE project=? ORDER BY id DESC LIMIT ?", (project, limit))
-        return self._q("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))
+    def verify_audit(self) -> dict:
+        rows = self._q("SELECT * FROM audit ORDER BY id")
+        prev, legacy, hashed, bad = "GENESIS", 0, 0, None
+        for r in rows:
+            if r["hash"] is None:
+                legacy += 1                       # rows written before the chain existed cannot be verified
+                if hashed:                        # an unchained row after chained rows means somebody inserted it
+                    bad = bad or r["id"]
+                continue
+            hashed += 1
+            expect = self._audit_hash(prev, [r["ts"], r["actor"], r["project"], r["action"], r["entity"], r["detail"]])
+            if r["prev_hash"] != prev or r["hash"] != expect:
+                bad = bad or r["id"]
+            prev = r["hash"]
+        first, last = (rows[0]["id"] if rows else 0), (rows[-1]["id"] if rows else 0)
+        ids = [r["id"] for r in rows]
+        gaps = [i for i in range(first, last + 1) if i not in set(ids)] if rows and last - first < 200000 else []
+        return {"ok": bad is None and not gaps, "rows": len(rows), "chained_rows": hashed, "legacy_rows": legacy,
+                "first_bad_id": bad, "missing_ids": gaps[:20], "head": prev if hashed else None}
+
+    def audit_log(self, project: str | None = None, limit: int = 200, actor: str | None = None,
+                  action: str | None = None) -> list[dict]:
+        sql, args = "SELECT id,ts,actor,project,action,entity,detail,hash FROM audit WHERE 1=1", []
+        for col, val in (("project", project), ("actor", actor)):
+            if val:
+                sql += f" AND {col}=?"; args.append(val)
+        if action:
+            sql += " AND action LIKE ?"; args.append(action.replace("%", "") + "%")
+        return self._q(sql + " ORDER BY id DESC LIMIT ?", tuple(args) + (limit,))
 
 
     # ================================================================ generic records (HARA, TARA, ...)

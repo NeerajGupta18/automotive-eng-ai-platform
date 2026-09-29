@@ -11,8 +11,10 @@ def get_container(request: Request) -> Container:
     return request.app.state.container
 
 
-def get_actor(x_user: str = Header(default="anonymous")) -> str:
-    return x_user.strip()[:64] or "anonymous"
+def get_actor(request: Request, x_user: str = Header(default="anonymous")) -> str:
+    """Authenticated identity (token-bound) when AUTH_MODE=enforced; the X-User header only in development mode."""
+    from app.core.observability import clean_id
+    return getattr(request.state, "auth_user", None) or clean_id(x_user) or "anonymous"
 
 
 def get_project(project: str, cont: Container = Depends(get_container)) -> str:

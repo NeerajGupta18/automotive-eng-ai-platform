@@ -53,6 +53,9 @@ def create_app(container: Container | None = None) -> FastAPI:
     from app.api import tara as tara_api
     app.include_router(tara_api.router)
     app.include_router(tara_api.public)
+    from app.api import uds as uds_api
+    app.include_router(uds_api.router)
+    app.include_router(uds_api.public)
 
     def c(request: Request) -> Container:
         if request.app.state.container is None:      # lazy: built on first request

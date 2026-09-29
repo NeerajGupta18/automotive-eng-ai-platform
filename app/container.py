@@ -27,6 +27,8 @@ class Container:
         self.hara = HARAService(self)
         from app.modules.tara.service import TARAService
         self.tara = TARAService(self)
+        from app.modules.uds.service import UDSService
+        self.uds = UDSService(self)
 
     def store(self, project: str):
         """One isolated vector collection per project (prevents cross-program leakage)."""

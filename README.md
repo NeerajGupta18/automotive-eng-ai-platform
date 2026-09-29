@@ -9,7 +9,7 @@ one module per case study:
 | 1 | **AUTOSAR HLD Document Analysis** | ✅ Implemented (Stage 1) |
 | 2 | **Functional Safety HARA & safety requirements** | ✅ Implemented (Stage 2) |
 | 3 | **Cybersecurity TARA** | ✅ Implemented (Stage 2) |
-| 4 | UDS diagnostics & test generation | ⬜ Planned (Stage 3) |
+| 4 | **UDS diagnostics & test generation** | ✅ Implemented (Stage 3) |
 | 5 | Secure code debugging & review | ⬜ Planned (Stage 4) |
 
 > AI output is advisory. Nothing is used for design approval, compliance or release
@@ -56,6 +56,23 @@ Pipeline: **architecture → assets → attack surface / trust boundaries → th
 
 The ASIL table, the attack-potential values, the feasibility thresholds and the risk matrix are implemented as **explicit, versioned example rule sets** (`example-additive-v1`, `example-attack-potential-v1`). They follow the structure of the published methods but you must **check them against your licensed ISO 26262 / ISO/SAE 21434 copy and your organisation's approved method** and change the tables in `rules.py` if they differ. The hazard and threat libraries are **synthetic training data**, not real project knowledge.
 
+## What the UDS module does (Diagnostics)
+
+Pipeline: **diagnostic spec → consistency checks → response oracle → request validation → test generation → review → coverage → simulator → Python/CAPL export.**
+
+- **Specification model** (sessions, security levels, services, DIDs, routines, DTCs, timing) built from a JSON file or **extracted from a Markdown/PDF spec document** (table-aware, same parser as the HLD module; the extraction of the sample spec equals a golden JSON in tests). **Ten consistency rules** on the spec itself (duplicate DIDs, undefined security levels, writable DID without security, DIDs defined but service 0x22 not declared, unmodelled services ...). A spec with errors cannot be approved.
+- **One deterministic response oracle** (`engine.py`) predicts the ECU response to any request in any state: NRC 0x11/0x12/0x13/0x24/0x31/0x33/0x35/0x36/0x37/0x7E/0x7F, suppress-positive-response, session changes that lock security access, seed/key sequences with attempt limits and delay, DID and routine rules, write range checks, S3 timeout. The **check order is documented in the file** so it can be aligned with an OEM specification. The LLM never decides an expected result.
+- **Request validation**: send one or a sequence of requests (`<KEY>` / `<BADKEY>` markers for key material) and get the expected response, the rule that fired and a plain-language reason.
+- **Test generation**: positive, negative, boundary, session, security and timing tests are enumerated from the spec and the **oracle computes every expected result**, so expectations cannot drift from the validation rules. About 118 tests for the sample BCM spec (unlock and lock-out, wrong key, range boundaries, length ±1, session-denied, S3 timeout, TesterPresent keep-alive ...).
+- **Review workflow**: tests are proposed, then approved by a second person; tests cannot be approved until the spec is approved. When the spec changes, regenerating **marks changed tests and tests for removed elements suspect** with the reason.
+- **Coverage**: every spec element needs a positive and a negative test (attributed by the requests actually sent), plus an **NRC coverage** view (applicable vs exercised).
+- **Simulator with fault injection**: a simulated ECU runs the tests without hardware. Seven injectable defects (ignored session restrictions, no security, accept any key, wrong NRC for length errors, ignored suppress bit, no range check, no attempt limit) are **each detected** by the generated suite (asserted in tests), and the correct implementation passes all tests.
+- **Export**: a **pytest bundle** (generated tests + standalone stdlib-only `uds_harness.py` + `conftest.py`) and CSV/JSON; an **experimental CAPL** template. Only approved tests are exported unless you ask for a draft. The exported pytest bundle is executed in the test-suite against the simulator (passes on a correct ECU, fails on injected defects).
+- **Cross-module traceability**: a test can be attached as verification evidence to a HARA FSR/TSR or a TARA cybersecurity requirement. The shared graph then links hazardous event → goal → requirement → test, so re-assessing the event flags the test evidence for review.
+- **Cited Q&A** over the specification document, reusing the shared RAG core.
+
+**What this does not prove:** the simulator shares the oracle with the generator, so passing tests show that the suite and the exported code are consistent and can detect deviations, **not that the specification or the oracle rules are correct**. Verify the oracle's check order and NRC choices against your OEM diagnostic specification (ISO 14229 leaves some choices to the OEM). The CAPL file and the `SocketCanEcu` adapter were **not compiled/run against CANoe or a real bus** here.
+
 ## Architecture
 
 ```mermaid
@@ -80,13 +97,14 @@ app/
                        trace (traceability graph) · workflow (four-eyes, suspect propagation) · reqquality
   modules/hld/         extractor · analysis · service
   modules/hara/        rules (ASIL) · templates · service
-  modules/tara/        rules (risk) · architecture · service      (future: uds/ codereview/)
-  api/                 main · hld routes · hara · tara · deps
+  modules/tara/        rules (risk) · architecture · service
+  modules/uds/         spec · engine (oracle) · testgen · simulator · harness_template · export · service   (future: codereview/)
+  api/                 main · hld routes · hara · tara · uds · deps
 ui/streamlit_app.py    HLD page (main)
-ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py
+ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py
 data/library/          synthetic hazard and threat libraries (versioned, owner + review date)
-data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes) in .md and .pdf
-tests/                 117 tests; every store test runs on both NumPy and ChromaDB
+data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json)
+tests/                 158 tests; every store test runs on both NumPy and ChromaDB
 ```
 
 ## Quick start
@@ -155,7 +173,7 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 
 ## Testing
 
-`python -m pytest -q` runs 117 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation.
+`python -m pytest -q` runs 158 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage.
 
 **Verified in development:** the full automated suite, plus the Streamlit UI driven headlessly (Streamlit `AppTest`) against a live API.
 **Not verified here:** a real LLM (Ollama/vLLM), sentence-transformers embeddings, and the Docker build. Run these once on your machine before a demo.
@@ -168,12 +186,13 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - Sample documents and both libraries are synthetic. No licensed standards text is included.
 - Library retrieval with the offline hash embedder is lexical and can surface loosely related entries; use BGE/E5 embeddings for better similarity. Similar hazards are always shown as suggestions, never applied automatically.
 - TARA threat generation is taxonomy-driven (asset kind × interface). Anything the library does not cover is reported (*assets without threats*, coverage gaps) rather than invented.
+- The UDS oracle models ten services (0x10, 0x11, 0x14, 0x19, 0x22, 0x27, 0x2E, 0x31, 0x3E, 0x85). Other services listed in a spec are flagged *unmodelled* and get no tests; memory/transfer services, functional addressing, ISO-TP and CAN timing are out of scope.
 - Authoring of full safety cases, diagram interpretation and formal FMEA/FTA are out of scope.
 
 ## Roadmap
 
 - [x] Stage 1: shared core + HLD module
 - [x] Stage 2: HARA (deterministic S/E/C→ASIL, safety goals, FSR/TSR drafts, allocation, change impact) and TARA (assets, attack surface, threat library, risk, controls, coverage)
-- [ ] Stage 3: UDS (request validation, positive/negative test generation, Python/CAPL export)
+- [x] Stage 3: UDS (spec extraction, response oracle, request validation, test generation, simulator with fault injection, Python/CAPL export)
 - [ ] Stage 4: Secure code review (MISRA-style checks, static-analysis log ingestion)
 - [ ] Stage 5: traceability graph, RBAC, observability, packaging

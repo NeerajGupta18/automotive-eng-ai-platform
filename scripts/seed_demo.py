@@ -31,6 +31,11 @@ def main() -> None:
     sysref = requests.post(f"{P}/tara/systems", json={"name": "BCM system", "architecture": arch}, headers=hdr, timeout=60).json()["ref"]
     r = requests.post(f"{P}/tara/systems/{sysref}/analyze", headers=hdr, timeout=60).json()
     print(f"TARA: system {sysref}, {r['assets']} assets, {r['threats']} threat scenarios proposed")
+    doc = requests.post(f"{P}/documents", timeout=60, headers=hdr, data={"version": "1.0", "status": "approved"},
+                        files={"file": ("uds_bcm_spec.md", (SAMPLES / "uds_bcm_spec.md").read_bytes())}).json()
+    spec = requests.post(f"{P}/uds/specs/from-document", json={"doc_id": doc["id"]}, headers=hdr, timeout=60).json()["ref"]
+    g = requests.post(f"{P}/uds/specs/{spec}/generate", headers=hdr, timeout=60).json()
+    print(f"UDS: spec {spec} extracted, {g['created']} tests generated (approve the spec, then review the tests)")
     print("Done. Open the UI and select project 'bcm-demo'.")
 
 

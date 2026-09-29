@@ -1,0 +1,4 @@
+message,sender,receivers,bus,id,safety_relevant
+VehicleSpeed,PT_ECU,BCM;Gateway,CAN,0x123,yes
+DoorState,BCM,Gateway,CAN,0x2A0,no
+CrashState,Airbag_ECU,BCM,CAN,0x010,yes

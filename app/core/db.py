@@ -20,6 +20,17 @@ CREATE TABLE IF NOT EXISTS reviews(
     status TEXT NOT NULL DEFAULT 'pending', reviewer TEXT, comment TEXT,
     created_at TEXT NOT NULL, decided_at TEXT, UNIQUE(project, module, ref));
 CREATE TABLE IF NOT EXISTS extractions(doc_id TEXT PRIMARY KEY, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS records(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, project TEXT NOT NULL, module TEXT NOT NULL, kind TEXT NOT NULL,
+    ref TEXT NOT NULL, key TEXT, payload TEXT NOT NULL, status TEXT NOT NULL, rev INTEGER NOT NULL DEFAULT 1,
+    created_by TEXT, created_at TEXT NOT NULL, updated_by TEXT, updated_at TEXT NOT NULL,
+    approved_by TEXT, approved_at TEXT, UNIQUE(project, ref), UNIQUE(project, module, kind, key));
+CREATE TABLE IF NOT EXISTS record_history(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, project TEXT NOT NULL, ref TEXT NOT NULL, rev INTEGER NOT NULL,
+    ts TEXT NOT NULL, actor TEXT NOT NULL, event TEXT NOT NULL, status TEXT NOT NULL, snapshot TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS links(
+    id INTEGER PRIMARY KEY AUTOINCREMENT, project TEXT NOT NULL, src TEXT NOT NULL, dst TEXT NOT NULL,
+    rel TEXT NOT NULL, created_by TEXT, created_at TEXT NOT NULL, UNIQUE(project, src, dst, rel));
 CREATE TABLE IF NOT EXISTS audit(
     id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, actor TEXT NOT NULL,
     project TEXT, action TEXT NOT NULL, entity TEXT, detail TEXT);
@@ -130,3 +141,98 @@ class Database:
         if project:
             return self._q("SELECT * FROM audit WHERE project=? ORDER BY id DESC LIMIT ?", (project, limit))
         return self._q("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))
+
+
+    # ================================================================ generic records (HARA, TARA, ...)
+    def _rec(self, row) -> dict:
+        d = dict(row)
+        d["payload"] = json.loads(d["payload"])
+        return d
+
+    def _next_ref(self, project: str, prefix: str) -> str:
+        rows = self._conn.execute("SELECT ref FROM records WHERE project=? AND ref LIKE ?",
+                                  (project, f"{prefix}-%")).fetchall()
+        nums = [int(r["ref"].split("-")[-1]) for r in rows if r["ref"].split("-")[-1].isdigit()]
+        return f"{prefix}-{(max(nums) if nums else 0) + 1:03d}"
+
+    def _history(self, rec: dict, actor: str, event: str) -> None:
+        self._conn.execute(
+            "INSERT INTO record_history(project,ref,rev,ts,actor,event,status,snapshot) VALUES(?,?,?,?,?,?,?,?)",
+            (rec["project"], rec["ref"], rec["rev"], now(), actor, event, rec["status"], json.dumps(rec["payload"])))
+
+    def rec_create(self, project: str, module: str, kind: str, prefix: str, payload: dict, status: str,
+                   actor: str, key: str | None = None) -> tuple[dict, bool]:
+        """Create a record with a sequential reference (H-001, TS-014, ...). If `key` already exists the
+        existing record is returned unchanged, which makes generation steps idempotent."""
+        with self._lock:
+            if key is not None:
+                r = self._conn.execute("SELECT * FROM records WHERE project=? AND module=? AND kind=? AND key=?",
+                                       (project, module, kind, key)).fetchone()
+                if r:
+                    return self._rec(r), False
+            ref, ts = self._next_ref(project, prefix), now()
+            self._conn.execute(
+                "INSERT INTO records(project,module,kind,ref,key,payload,status,rev,created_by,created_at,updated_by,updated_at)"
+                " VALUES(?,?,?,?,?,?,?,1,?,?,?,?)",
+                (project, module, kind, ref, key, json.dumps(payload), status, actor, ts, actor, ts))
+            rec = self.rec_get(project, ref)
+            self._history(rec, actor, "create")
+            self._conn.commit()
+            return rec, True
+
+    def rec_get(self, project: str, ref: str) -> dict | None:
+        with self._lock:
+            r = self._conn.execute("SELECT * FROM records WHERE project=? AND ref=?", (project, ref)).fetchone()
+            return self._rec(r) if r else None
+
+    def rec_list(self, project: str, module: str | None = None, kind: str | None = None,
+                 status: str | None = None) -> list[dict]:
+        sql, args = "SELECT * FROM records WHERE project=?", [project]
+        for col, val in (("module", module), ("kind", kind), ("status", status)):
+            if val:
+                sql += f" AND {col}=?"; args.append(val)
+        with self._lock:
+            return [self._rec(r) for r in self._conn.execute(sql + " ORDER BY id", args).fetchall()]
+
+    def rec_update(self, project: str, ref: str, actor: str, payload: dict | None = None,
+                   status: str | None = None, event: str = "update", approve: bool = False) -> dict:
+        """Every change bumps the revision and stores a snapshot (decision history / audit evidence)."""
+        with self._lock:
+            rec = self.rec_get(project, ref)
+            if rec is None:
+                raise KeyError(ref)
+            new_payload = rec["payload"] if payload is None else payload
+            new_status = status or rec["status"]
+            approved_by, approved_at = rec["approved_by"], rec["approved_at"]
+            if approve:
+                approved_by, approved_at = actor, now()
+            elif new_status != "approved":
+                approved_by = approved_at = None
+            self._conn.execute(
+                "UPDATE records SET payload=?,status=?,rev=rev+1,updated_by=?,updated_at=?,approved_by=?,approved_at=?"
+                " WHERE project=? AND ref=?",
+                (json.dumps(new_payload), new_status, actor, now(), approved_by, approved_at, project, ref))
+            rec = self.rec_get(project, ref)
+            self._history(rec, actor, event)
+            self._conn.commit()
+            return rec
+
+    def rec_history(self, project: str, ref: str) -> list[dict]:
+        rows = self._q("SELECT * FROM record_history WHERE project=? AND ref=? ORDER BY id", (project, ref))
+        for r in rows:
+            r["snapshot"] = json.loads(r["snapshot"])
+        return rows
+
+    # ================================================================ traceability links
+    def link_add(self, project: str, src: str, dst: str, rel: str, actor: str) -> None:
+        self._q("INSERT OR IGNORE INTO links(project,src,dst,rel,created_by,created_at) VALUES(?,?,?,?,?,?)",
+                (project, src, dst, rel, actor, now()))
+
+    def link_remove(self, project: str, src: str, rel: str | None = None) -> None:
+        if rel:
+            self._q("DELETE FROM links WHERE project=? AND src=? AND rel=?", (project, src, rel))
+        else:
+            self._q("DELETE FROM links WHERE project=? AND src=?", (project, src))
+
+    def links(self, project: str) -> list[dict]:
+        return self._q("SELECT src,dst,rel FROM links WHERE project=? ORDER BY id", (project,))

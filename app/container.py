@@ -23,6 +23,10 @@ class Container:
         # imported here to avoid circular imports as modules grow
         from app.modules.hld.service import HLDService
         self.hld = HLDService(self)
+        from app.modules.hara.service import HARAService
+        self.hara = HARAService(self)
+        from app.modules.tara.service import TARAService
+        self.tara = TARAService(self)
 
     def store(self, project: str):
         """One isolated vector collection per project (prevents cross-program leakage)."""

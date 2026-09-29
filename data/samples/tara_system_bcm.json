@@ -1,0 +1,18 @@
+{
+  "components": [
+    {"name": "Telematics", "type": "telematics", "zone": "telematics", "interfaces": ["Cellular", "Bluetooth", "Ethernet"], "security_relevant": true, "handles_personal_data": true},
+    {"name": "Gateway", "type": "gateway", "zone": "gateway", "interfaces": ["Ethernet", "CAN", "OBD"], "security_relevant": true},
+    {"name": "BCM", "type": "ecu", "zone": "body", "interfaces": ["CAN", "LIN"], "safety_relevant": true},
+    {"name": "PT_ECU", "type": "ecu", "zone": "powertrain", "interfaces": ["CAN"], "safety_relevant": true},
+    {"name": "DoorModule", "type": "actuator", "zone": "body", "interfaces": ["LIN"]},
+    {"name": "Backend", "type": "backend", "zone": "external", "interfaces": ["Backend", "Cellular"]},
+    {"name": "ServiceTool", "type": "external_tool", "zone": "external", "interfaces": ["OBD"]}
+  ],
+  "data_flows": [
+    {"name": "VehicleSpeed", "from": "PT_ECU", "to": "BCM", "channel": "CAN", "safety_relevant": true},
+    {"name": "DoorLockCmd", "from": "BCM", "to": "DoorModule", "channel": "LIN", "safety_relevant": true},
+    {"name": "OTAPackage", "from": "Backend", "to": "Telematics", "channel": "Cellular", "confidential": true},
+    {"name": "UpdateImage", "from": "Telematics", "to": "Gateway", "channel": "Ethernet"},
+    {"name": "DiagRequest", "from": "ServiceTool", "to": "Gateway", "channel": "OBD"}
+  ]
+}

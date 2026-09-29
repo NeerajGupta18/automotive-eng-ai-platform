@@ -5,11 +5,12 @@ from __future__ import annotations
 import re
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
-from fastapi.responses import PlainTextResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field
 
 from app.container import Container
 from app.core.documents import IngestError
+from app.core.errors import Conflict, Invalid, NotFound
 
 PROJECT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{1,63}$")
 
@@ -33,6 +34,25 @@ class DecisionIn(BaseModel):
 def create_app(container: Container | None = None) -> FastAPI:
     app = FastAPI(title="Automotive Engineering AI Platform", version="0.1.0")
     app.state.container = container
+
+    @app.exception_handler(NotFound)
+    async def _nf(_: Request, e: NotFound):
+        return JSONResponse({"detail": str(e)}, 404)
+
+    @app.exception_handler(Invalid)
+    async def _inv(_: Request, e: Invalid):
+        return JSONResponse({"detail": str(e)}, 422)
+
+    @app.exception_handler(Conflict)
+    async def _conf(_: Request, e: Conflict):
+        return JSONResponse({"detail": str(e)}, 409)
+
+    from app.api import hara as hara_api
+    app.include_router(hara_api.router)
+    app.include_router(hara_api.public)
+    from app.api import tara as tara_api
+    app.include_router(tara_api.router)
+    app.include_router(tara_api.public)
 
     def c(request: Request) -> Container:
         if request.app.state.container is None:      # lazy: built on first request

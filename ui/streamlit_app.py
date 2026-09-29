@@ -1,54 +1,19 @@
-"""Streamlit engineering UI. Talks to the FastAPI service over HTTP (clean separation:
-the UI can be replaced by an enterprise portal without touching the backend)."""
+"""Streamlit engineering UI: AUTOSAR HLD analysis (main page). HARA and TARA are in ui/pages/."""
 from __future__ import annotations
 
-import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import pandas as pd
-import requests
 import streamlit as st
 
-API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+import common
+from common import api
 
-st.set_page_config(page_title="Automotive Engineering AI", page_icon="🚗", layout="wide")
-
-
-# ------------------------------------------------------------------ API helper
-def api(method: str, path: str, *, expect_json: bool = True, **kw):
-    headers = {"X-User": st.session_state.get("user", "anonymous")}
-    try:
-        r = requests.request(method, f"{API_URL}{path}", headers=headers, timeout=300, **kw)
-    except requests.RequestException as e:
-        st.error(f"Cannot reach the API at {API_URL}: {e}")
-        return None
-    if not r.ok:
-        try:
-            detail = r.json().get("detail", r.text)
-        except ValueError:
-            detail = r.text
-        st.error(f"{r.status_code}: {detail}")
-        return None
-    return r.json() if expect_json else r.text
-
-
-# ------------------------------------------------------------------ sidebar
-with st.sidebar:
-    st.title("🚗 Automotive Engineering AI")
-    st.session_state["user"] = st.text_input("Your name (audit log)", value=st.session_state.get("user", "engineer"))
-    health = api("GET", "/health")
-    if health:
-        st.caption(f"LLM: **{health['llm']}** · Embeddings: **{health['embeddings']}** · Vector DB: **{health['vector_store']}**")
-    projects = api("GET", "/projects") or []
-    names = [p["name"] for p in projects]
-    project = st.selectbox("Project workspace", names) if names else None
-    with st.expander("➕ New project"):
-        new_name = st.text_input("Project name", key="new_project")
-        if st.button("Create project") and new_name:
-            if api("POST", "/projects", json={"name": new_name}):
-                st.rerun()
-    st.divider()
-    st.caption("Module: **AUTOSAR HLD Analysis** (Stage 1). HARA, TARA, UDS and Code Review modules follow.")
-    st.info("AI output is advisory. Every answer and finding requires engineer review before use.")
+common.setup("HLD analysis")
+project = common.sidebar("Module: **AUTOSAR HLD Analysis**. Use the pages menu for HARA and TARA.")
 
 if not project:
     st.header("Welcome")

@@ -1,0 +1,837 @@
+{
+ "name": "Synthetic training TARA library (NOT real project data)",
+ "version": "1.0",
+ "note": "Illustrative, high-level patterns for demonstration only. Replace with your organisation's approved threat library.",
+ "patterns": [
+  {
+   "id": "TP-001",
+   "name": "Spoofed message injected on CAN",
+   "stride": "spoofing",
+   "property": "authenticity",
+   "asset_kind": "message",
+   "interface": "CAN",
+   "description": "A message that appears to come from a legitimate sender is injected on the bus.",
+   "attack_summary": "Attacker gains access to the bus segment through a compromised node or physical access and transmits messages with a legitimate identifier.",
+   "damage": "Receiving function acts on false data",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-AUTH-MSG",
+    "C-GW-FILTER",
+    "C-IDS"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-002",
+   "name": "Replay of captured CAN messages",
+   "stride": "spoofing",
+   "property": "authenticity",
+   "asset_kind": "message",
+   "interface": "CAN",
+   "description": "Previously recorded valid messages are re-sent to trigger a function at the wrong time.",
+   "attack_summary": "Attacker records bus traffic and re-transmits it later.",
+   "damage": "Function triggered at an unintended moment",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-AUTH-MSG",
+    "C-IDS"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-003",
+   "name": "Tampering with message content on CAN",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "message",
+   "interface": "CAN",
+   "description": "Signal values in transit are altered.",
+   "attack_summary": "A compromised gateway or bridge node modifies signal content between segments.",
+   "damage": "Wrong data accepted by the receiver",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-AUTH-MSG",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-004",
+   "name": "Bus flooding denies CAN communication",
+   "stride": "denial_of_service",
+   "property": "availability",
+   "asset_kind": "message",
+   "interface": "CAN",
+   "description": "High-priority message flooding starves legitimate traffic.",
+   "attack_summary": "Attacker with bus access transmits messages at very high rate.",
+   "damage": "Loss of function that depends on the message",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "moderate",
+    "operational": "major",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1d",
+    "expertise": "layman",
+    "knowledge": "public",
+    "window": "easy",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-IDS",
+    "C-RATE-LIMIT",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-005",
+   "name": "Tampering with Ethernet payload",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "message",
+   "interface": "Ethernet",
+   "description": "Ethernet payloads are modified in transit between nodes.",
+   "attack_summary": "Attacker inserts a device into the network path.",
+   "damage": "Manipulated data or commands accepted",
+   "impact_hint": {
+    "safety": "moderate",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-AUTH-MSG",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-006",
+   "name": "Spoofed Ethernet node",
+   "stride": "spoofing",
+   "property": "authenticity",
+   "asset_kind": "message",
+   "interface": "Ethernet",
+   "description": "A rogue node impersonates a legitimate Ethernet participant.",
+   "attack_summary": "Attacker connects an unauthorised device to a network port.",
+   "damage": "False data or commands from an unauthenticated source",
+   "impact_hint": {
+    "safety": "moderate",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-AUTH-MSG",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-007",
+   "name": "Denial of service on Ethernet",
+   "stride": "denial_of_service",
+   "property": "availability",
+   "asset_kind": "message",
+   "interface": "Ethernet",
+   "description": "Excess traffic makes a service unreachable.",
+   "attack_summary": "Attacker generates high traffic volume towards a node.",
+   "damage": "Service unavailable",
+   "impact_hint": {
+    "safety": "moderate",
+    "financial": "moderate",
+    "operational": "major",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1d",
+    "expertise": "layman",
+    "knowledge": "public",
+    "window": "easy",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-RATE-LIMIT",
+    "C-IDS"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-008",
+   "name": "Spoofed LIN command",
+   "stride": "spoofing",
+   "property": "authenticity",
+   "asset_kind": "message",
+   "interface": "LIN",
+   "description": "A LIN slave accepts a command from an unauthorised master.",
+   "attack_summary": "Attacker with physical access to the LIN harness sends frames.",
+   "damage": "Actuator performs an unintended action",
+   "impact_hint": {
+    "safety": "moderate",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "public",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-PHYS-ACCESS",
+    "C-IDS"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-009",
+   "name": "Unauthorised diagnostic session",
+   "stride": "elevation_of_privilege",
+   "property": "authenticity",
+   "asset_kind": "diagnostic_access",
+   "interface": "OBD",
+   "description": "Diagnostic services are used without proper authorisation.",
+   "attack_summary": "Attacker connects a tool to the diagnostic port and uses services that should be restricted.",
+   "damage": "Unauthorised access to protected functions",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "major",
+    "operational": "major",
+    "privacy": "moderate"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "easy",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-DIAG-AUTH",
+    "C-LOGGING",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-010",
+   "name": "Disclosure of data via diagnostics",
+   "stride": "information_disclosure",
+   "property": "confidentiality",
+   "asset_kind": "diagnostic_access",
+   "interface": "OBD",
+   "description": "Protected data can be read through diagnostic services.",
+   "attack_summary": "Attacker uses diagnostic read services without adequate access control.",
+   "damage": "Sensitive data disclosed",
+   "impact_hint": {
+    "safety": "negligible",
+    "financial": "major",
+    "operational": "moderate",
+    "privacy": "major"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "easy",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-DIAG-AUTH",
+    "C-KEY-STORE"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-011",
+   "name": "No trace of diagnostic actions",
+   "stride": "repudiation",
+   "property": "non_repudiation",
+   "asset_kind": "diagnostic_access",
+   "interface": "OBD",
+   "description": "Security-relevant diagnostic actions cannot be attributed.",
+   "attack_summary": "Actions performed through the diagnostic interface are not logged.",
+   "damage": "Misuse cannot be investigated",
+   "impact_hint": {
+    "safety": "negligible",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1d",
+    "expertise": "layman",
+    "knowledge": "public",
+    "window": "unlimited",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-LOGGING"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-012",
+   "name": "Unauthorised firmware reflash via diagnostics",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "firmware",
+   "interface": "OBD",
+   "description": "Modified software is loaded through the diagnostic interface.",
+   "attack_summary": "Attacker uses programming services with insufficient authorisation.",
+   "damage": "ECU runs manipulated software",
+   "impact_hint": {
+    "safety": "severe",
+    "financial": "major",
+    "operational": "major",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "confidential",
+    "window": "moderate",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-SECURE-BOOT",
+    "C-DIAG-AUTH",
+    "C-LOGGING"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-013",
+   "name": "Malicious update image accepted",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "ota_update_package",
+   "interface": "OTA",
+   "description": "A manipulated update package is installed.",
+   "attack_summary": "Attacker manipulates the update package on the path from backend to vehicle or on the backend.",
+   "damage": "Persistent compromise of one or more ECUs",
+   "impact_hint": {
+    "safety": "severe",
+    "financial": "severe",
+    "operational": "major",
+    "privacy": "moderate"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=6m",
+    "expertise": "expert",
+    "knowledge": "confidential",
+    "window": "difficult",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-SIGNED-OTA",
+    "C-SECURE-BOOT",
+    "C-ROLLBACK"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-014",
+   "name": "Rollback to vulnerable software version",
+   "stride": "elevation_of_privilege",
+   "property": "integrity",
+   "asset_kind": "ota_update_package",
+   "interface": "OTA",
+   "description": "An older software version with known weaknesses is installed.",
+   "attack_summary": "Attacker replays a previously valid update package.",
+   "damage": "Known vulnerabilities re-introduced",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "major",
+    "operational": "major",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-ROLLBACK",
+    "C-SIGNED-OTA"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-015",
+   "name": "Update package disclosed in transit",
+   "stride": "information_disclosure",
+   "property": "confidentiality",
+   "asset_kind": "ota_update_package",
+   "interface": "Cellular",
+   "description": "Software contents are read by a third party.",
+   "attack_summary": "Attacker observes the download path.",
+   "damage": "Intellectual property disclosed",
+   "impact_hint": {
+    "safety": "negligible",
+    "financial": "major",
+    "operational": "negligible",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "proficient",
+    "knowledge": "public",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-PRIVACY"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-016",
+   "name": "Exploitation of a wireless service",
+   "stride": "elevation_of_privilege",
+   "property": "integrity",
+   "asset_kind": "firmware",
+   "interface": "Bluetooth",
+   "description": "A vulnerability in a wireless service allows unintended code or command execution.",
+   "attack_summary": "Attacker within radio range sends crafted input to the service.",
+   "damage": "Compromise of the receiving ECU",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "major",
+    "operational": "major",
+    "privacy": "major"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-INPUT-VALID",
+    "C-SECURE-BOOT",
+    "C-GW-FILTER"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-017",
+   "name": "Exploitation of a cellular service",
+   "stride": "elevation_of_privilege",
+   "property": "integrity",
+   "asset_kind": "firmware",
+   "interface": "Cellular",
+   "description": "A vulnerability in a remotely reachable service allows unintended code execution.",
+   "attack_summary": "Remote attacker sends crafted requests to the vehicle.",
+   "damage": "Remote compromise, potential lateral movement",
+   "impact_hint": {
+    "safety": "severe",
+    "financial": "severe",
+    "operational": "major",
+    "privacy": "major"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "unlimited",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-INPUT-VALID",
+    "C-SECURE-BOOT",
+    "C-GW-FILTER",
+    "C-IDS"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-018",
+   "name": "Malicious file processed from USB",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "firmware",
+   "interface": "USB",
+   "description": "Crafted media triggers unintended behaviour.",
+   "attack_summary": "Attacker with physical access supplies a manipulated USB device.",
+   "damage": "ECU compromise or misbehaviour",
+   "impact_hint": {
+    "safety": "moderate",
+    "financial": "moderate",
+    "operational": "moderate",
+    "privacy": "moderate"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1w",
+    "expertise": "proficient",
+    "knowledge": "public",
+    "window": "easy",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-INPUT-VALID",
+    "C-SECURE-BOOT"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-019",
+   "name": "Extraction of cryptographic keys",
+   "stride": "information_disclosure",
+   "property": "confidentiality",
+   "asset_kind": "key_material",
+   "interface": "any",
+   "description": "Keys are read from the component.",
+   "attack_summary": "Attacker with physical or logical access to the component attempts to read stored keys.",
+   "damage": "All protections relying on the key are void",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "severe",
+    "operational": "major",
+    "privacy": "moderate"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=6m",
+    "expertise": "expert",
+    "knowledge": "confidential",
+    "window": "difficult",
+    "equipment": "bespoke"
+   },
+   "controls": [
+    "C-KEY-STORE"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-020",
+   "name": "Tampering with configuration data",
+   "stride": "tampering",
+   "property": "integrity",
+   "asset_kind": "configuration",
+   "interface": "any",
+   "description": "Calibration or configuration values are altered.",
+   "attack_summary": "Attacker modifies stored parameters through an exposed interface.",
+   "damage": "Function behaves outside its intended range",
+   "impact_hint": {
+    "safety": "major",
+    "financial": "moderate",
+    "operational": "major",
+    "privacy": "negligible"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "expert",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "specialized"
+   },
+   "controls": [
+    "C-SECURE-BOOT",
+    "C-DIAG-AUTH"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "TP-021",
+   "name": "Disclosure of personal data",
+   "stride": "information_disclosure",
+   "property": "confidentiality",
+   "asset_kind": "personal_data",
+   "interface": "any",
+   "description": "Personal data is accessed by an unauthorised party.",
+   "attack_summary": "Attacker obtains data stored in or transmitted by the component.",
+   "damage": "Privacy breach, regulatory consequences",
+   "impact_hint": {
+    "safety": "negligible",
+    "financial": "major",
+    "operational": "negligible",
+    "privacy": "severe"
+   },
+   "ap_hint": {
+    "elapsed_time": "<=1m",
+    "expertise": "proficient",
+    "knowledge": "restricted",
+    "window": "moderate",
+    "equipment": "standard"
+   },
+   "controls": [
+    "C-PRIVACY",
+    "C-KEY-STORE"
+   ],
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  }
+ ],
+ "controls": [
+  {
+   "id": "C-AUTH-MSG",
+   "name": "Message authentication and freshness",
+   "requirement_template": "The {component} shall verify the authenticity and freshness of '{asset}' using a message authentication code of at least [MAC_LENGTH_BITS] bits before processing the message.",
+   "assumptions": "Key management exists; the ECU has cryptographic capability (hardware or software).",
+   "alternatives": "Gateway filtering only (reduces exposure but does not authenticate); detection only via IDS.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-IDS",
+   "name": "Intrusion detection",
+   "requirement_template": "The {component} shall report a security event within [DETECTION_TIME_ms] ms when [ANOMALY_CRITERION] is observed on '{asset}'.",
+   "assumptions": "A security event collection path (e.g. to a central logger) exists.",
+   "alternatives": "Preventive controls only, without detection.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-GW-FILTER",
+   "name": "Gateway filtering and segmentation",
+   "requirement_template": "The gateway shall forward '{asset}' between network segments only if it matches the approved communication matrix.",
+   "assumptions": "A gateway separates the network segments; the communication matrix is maintained.",
+   "alternatives": "Flat network with host-based checks on each ECU.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-RATE-LIMIT",
+   "name": "Rate limiting",
+   "requirement_template": "The {component} shall limit the processing of '{asset}' to at most [MAX_RATE_PER_S] messages per second.",
+   "assumptions": "Legitimate peak rates are known.",
+   "alternatives": "Over-dimensioning of resources.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-DIAG-AUTH",
+   "name": "Diagnostic access authentication",
+   "requirement_template": "The {component} shall grant access to protected diagnostic services only after successful authentication using [AUTH_METHOD].",
+   "assumptions": "A key or certificate provisioning process exists for service tools.",
+   "alternatives": "Physically disabling the port in the field (loses service capability).",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-SECURE-BOOT",
+   "name": "Secure boot",
+   "requirement_template": "The {component} shall verify the cryptographic signature of the software image before executing it.",
+   "assumptions": "A root of trust is available in hardware or immutable boot code.",
+   "alternatives": "Runtime integrity monitoring only.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-SIGNED-OTA",
+   "name": "Signed update packages",
+   "requirement_template": "The {component} shall install an update package only if its digital signature is verified against [TRUST_ANCHOR].",
+   "assumptions": "Backend signs packages with protected keys.",
+   "alternatives": "Transport-only protection (TLS) without package signatures.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-ROLLBACK",
+   "name": "Anti-rollback protection",
+   "requirement_template": "The {component} shall reject an update package whose version is lower than the stored minimum version counter.",
+   "assumptions": "A non-volatile monotonic counter is available.",
+   "alternatives": "Blacklisting individual versions.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-KEY-STORE",
+   "name": "Protected key storage",
+   "requirement_template": "The {component} shall store cryptographic keys in [SECURE_STORAGE] that prevents extraction through external interfaces.",
+   "assumptions": "Secure hardware or a protected memory region exists.",
+   "alternatives": "Software obfuscation (weaker).",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-INPUT-VALID",
+   "name": "Input validation on external services",
+   "requirement_template": "The {component} shall reject inputs to '{asset}' that do not conform to the specified format and length.",
+   "assumptions": "Input formats are specified.",
+   "alternatives": "Sandboxing of the receiving service.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-LOGGING",
+   "name": "Tamper-evident security logging",
+   "requirement_template": "The {component} shall record [SECURITY_EVENTS] with timestamp and requester identity in tamper-evident storage.",
+   "assumptions": "Persistent storage and a time source are available.",
+   "alternatives": "Logging in the backend only.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-PRIVACY",
+   "name": "Protection of personal or confidential data",
+   "requirement_template": "The {component} shall protect '{asset}' at rest and in transit using [ENCRYPTION_ALGORITHM].",
+   "assumptions": "Approved algorithms and key management exist.",
+   "alternatives": "Data minimisation (avoid storing the data).",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  },
+  {
+   "id": "C-PHYS-ACCESS",
+   "name": "Physical access hardening",
+   "requirement_template": "The {component} shall reject '{asset}' frames whose sender is not [APPROVED_MASTER].",
+   "assumptions": "Harness routing limits access; network roles are defined.",
+   "alternatives": "Tamper detection of the harness.",
+   "owner": "cyber-team",
+   "review_date": "2026-02-01",
+   "source": "synthetic"
+  }
+ ],
+ "coverage_checklist": {
+  "CAN": [
+   "spoofing",
+   "tampering",
+   "denial_of_service"
+  ],
+  "LIN": [
+   "spoofing"
+  ],
+  "Ethernet": [
+   "spoofing",
+   "tampering",
+   "denial_of_service"
+  ],
+  "OBD": [
+   "elevation_of_privilege",
+   "information_disclosure",
+   "repudiation",
+   "tampering"
+  ],
+  "OTA": [
+   "tampering",
+   "elevation_of_privilege"
+  ],
+  "Cellular": [
+   "elevation_of_privilege",
+   "information_disclosure"
+  ],
+  "Bluetooth": [
+   "elevation_of_privilege"
+  ],
+  "USB": [
+   "tampering"
+  ],
+  "WiFi": [
+   "elevation_of_privilege"
+  ],
+  "Backend": [
+   "tampering"
+  ]
+ },
+ "stale_after_days": 365
+}

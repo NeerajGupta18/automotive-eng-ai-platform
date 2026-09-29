@@ -29,6 +29,8 @@ class Container:
         self.tara = TARAService(self)
         from app.modules.uds.service import UDSService
         self.uds = UDSService(self)
+        from app.modules.codereview.service import CodeReviewService
+        self.codereview = CodeReviewService(self)
 
     def store(self, project: str):
         """One isolated vector collection per project (prevents cross-program leakage)."""

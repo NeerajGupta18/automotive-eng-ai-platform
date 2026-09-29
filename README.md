@@ -10,7 +10,7 @@ one module per case study:
 | 2 | **Functional Safety HARA & safety requirements** | ✅ Implemented (Stage 2) |
 | 3 | **Cybersecurity TARA** | ✅ Implemented (Stage 2) |
 | 4 | **UDS diagnostics & test generation** | ✅ Implemented (Stage 3) |
-| 5 | Secure code debugging & review | ⬜ Planned (Stage 4) |
+| 5 | **Secure code debugging & review** | ✅ Implemented (Stage 4) |
 
 > AI output is advisory. Nothing is used for design approval, compliance or release
 > without qualified human review. The platform enforces this in the workflow (see *Design decisions*).
@@ -73,6 +73,21 @@ Pipeline: **diagnostic spec → consistency checks → response oracle → reque
 
 **What this does not prove:** the simulator shares the oracle with the generator, so passing tests show that the suite and the exported code are consistent and can detect deviations, **not that the specification or the oracle rules are correct**. Verify the oracle's check order and NRC choices against your OEM diagnostic specification (ISO 14229 leaves some choices to the OEM). The CAPL file and the `SocketCanEcu` adapter were **not compiled/run against CANoe or a real bus** here.
 
+## What the code review module does (Secure code review)
+
+Pipeline: **C sources + static-analysis logs → rule analysis → corroboration → findings lifecycle → triage → verified fix proposals → gate / SARIF.**
+
+- **Built-in analyzer** (`analyzer.py`, dependency-free): 28 rules over a comment- and string-masked token stream with brace matching. Security (unbounded string functions, `gets`, format strings, shell execution, use-after-free/double free, hard-coded credentials and keys, allocation-size overflow, off-by-one loops, wrong `sizeof`, TOCTOU, weak temp/random), robustness (unchecked allocation, uninitialised variables) and safety/MISRA-style checks (goto, recursion, `switch` without default, fall-through, assignment in condition, missing braces, unreachable code, **ISR-shared variables that are not `volatile`**, complexity). Every rule has an original description, a fix hint, a CWE, a CERT C id where one exists and an informational MISRA-style number. Each rule has a positive test and a false-positive guard.
+- **Static-analysis log ingestion**: cppcheck XML, SARIF 2.1.0 and compiler-style text (DOCTYPE/ENTITY XML is rejected). Tool findings are matched to sources and **corroborated** against rule findings by line and CWE instead of being duplicated. A **log older than the source revision is ignored as stale**.
+- **Findings lifecycle**: every finding has a fingerprint (rule + file + function + normalised code, comments ignored), so **triage decisions survive line shifts and new revisions**; findings that disappear are marked *fixed*, and fixed ones that come back are *reopened* as regressions.
+- **Triage with accountability**: confirm, false positive or waive, each with a justification. For **critical/high findings a false-positive or waiver needs a second person** (four-eyes). Reviewer decisions produce a live **precision per rule and per origin**, so noisy rules can be tuned or dropped.
+- **Verified fix proposals**: for the rules where a mechanical fix is safe (`gets`, `strcpy`/`strcat`/`sprintf`, non-literal format, double free, off-by-one, missing `default`, missing braces, unchecked allocation) the module produces a unified diff **and re-analyses the patched code**: the finding must disappear and nothing new may appear. Nothing is changed automatically.
+- **Optional LLM review (off by default)**: the model must return JSON in which every item **quotes the exact line** it refers to; items whose evidence does not match the code are dropped as fabricated, severity is capped at *high*, CWE ids are validated, and results are marked low confidence and never auto-fixed. Source is sent as fenced **untrusted data**, secrets and key material are **redacted before sending**, and a non-local backend requires an explicit `allow_external` confirmation. A comment that tries to address an AI reviewer is itself flagged (rule CR029).
+- **Automotive context**: link an HLD so functions map to components; findings in components with HARA-allocated requirements carry the **highest ASIL** and are counted as safety-relevant. A finding can be linked to the requirement it undermines (shared traceability graph).
+- **Quality gate and CI**: `GET /gate?fail_on=high` and an offline CLI, `python scripts/review_gate.py src/ --fail-on high --format sarif`, that exits non-zero on blockers and emits **SARIF** for GitHub code scanning. Reports as Markdown, CSV, JSON and SARIF (waived and false-positive findings are exported as suppressions).
+
+**Honest scope:** this is a heuristic analyzer without a compiler front end, type information or data-flow engine, so it produces false positives and misses things a certified tool would catch. It is **not a MISRA compliance checker**: rule text is original, MISRA numbers are informational and must be verified against your licensed copy. Use it to complement, not replace, a qualified static analyzer and human review.
+
 ## Architecture
 
 ```mermaid
@@ -98,13 +113,14 @@ app/
   modules/hld/         extractor · analysis · service
   modules/hara/        rules (ASIL) · templates · service
   modules/tara/        rules (risk) · architecture · service
-  modules/uds/         spec · engine (oracle) · testgen · simulator · harness_template · export · service   (future: codereview/)
-  api/                 main · hld routes · hara · tara · uds · deps
+  modules/uds/         spec · engine (oracle) · testgen · simulator · harness_template · export · service   
+  modules/codereview/  analyzer (28 rules) · logs · fixes · sarif · service
+  api/                 main · hld routes · hara · tara · uds · codereview · deps
 ui/streamlit_app.py    HLD page (main)
-ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py
+ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py · 5_Secure_Code_Review.py
 data/library/          synthetic hazard and threat libraries (versioned, owner + review date)
-data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json)
-tests/                 158 tests; every store test runs on both NumPy and ChromaDB
+data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json), C code samples with planted defects + tool logs
+tests/                 248 tests; every store test runs on both NumPy and ChromaDB
 ```
 
 ## Quick start
@@ -173,7 +189,7 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 
 ## Testing
 
-`python -m pytest -q` runs 158 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage.
+`python -m pytest -q` runs 248 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage. Stage 4: every rule with a positive case and a false-positive guard, masking of comments/strings, fuzzing and performance, fingerprint stability, cppcheck/SARIF/text parsers and XML-entity rejection, verified fixes (including a patch that must be rejected), findings lifecycle (fixed/reopened/line shifts/stale logs), four-eyes triage, LLM guardrails (fabricated evidence dropped, redaction, external-backend gate), HLD/HARA enrichment, quality gate, SARIF, CLI exit codes.
 
 **Verified in development:** the full automated suite, plus the Streamlit UI driven headlessly (Streamlit `AppTest`) against a live API.
 **Not verified here:** a real LLM (Ollama/vLLM), sentence-transformers embeddings, and the Docker build. Run these once on your machine before a demo.
@@ -187,6 +203,7 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - Library retrieval with the offline hash embedder is lexical and can surface loosely related entries; use BGE/E5 embeddings for better similarity. Similar hazards are always shown as suggestions, never applied automatically.
 - TARA threat generation is taxonomy-driven (asset kind × interface). Anything the library does not cover is reported (*assets without threats*, coverage gaps) rather than invented.
 - The UDS oracle models ten services (0x10, 0x11, 0x14, 0x19, 0x22, 0x27, 0x2E, 0x31, 0x3E, 0x85). Other services listed in a spec are flagged *unmodelled* and get no tests; memory/transfer services, functional addressing, ISO-TP and CAN timing are out of scope.
+- The code analyzer handles C only (no C++, no preprocessor expansion or macro semantics, single-file analysis, no inter-procedural data flow). Use-after-free and uninitialised-variable checks are intra-block heuristics.
 - Authoring of full safety cases, diagram interpretation and formal FMEA/FTA are out of scope.
 
 ## Roadmap
@@ -194,5 +211,5 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - [x] Stage 1: shared core + HLD module
 - [x] Stage 2: HARA (deterministic S/E/C→ASIL, safety goals, FSR/TSR drafts, allocation, change impact) and TARA (assets, attack surface, threat library, risk, controls, coverage)
 - [x] Stage 3: UDS (spec extraction, response oracle, request validation, test generation, simulator with fault injection, Python/CAPL export)
-- [ ] Stage 4: Secure code review (MISRA-style checks, static-analysis log ingestion)
+- [x] Stage 4: Secure code review (28-rule analyzer, tool-log ingestion, findings lifecycle, verified fixes, opt-in LLM review, quality gate, SARIF)
 - [ ] Stage 5: traceability graph, RBAC, observability, packaging

@@ -56,6 +56,9 @@ def create_app(container: Container | None = None) -> FastAPI:
     from app.api import uds as uds_api
     app.include_router(uds_api.router)
     app.include_router(uds_api.public)
+    from app.api import codereview as cr_api
+    app.include_router(cr_api.router)
+    app.include_router(cr_api.public)
 
     def c(request: Request) -> Container:
         if request.app.state.container is None:      # lazy: built on first request

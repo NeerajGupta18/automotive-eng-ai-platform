@@ -36,6 +36,16 @@ def main() -> None:
     spec = requests.post(f"{P}/uds/specs/from-document", json={"doc_id": doc["id"]}, headers=hdr, timeout=60).json()["ref"]
     g = requests.post(f"{P}/uds/specs/{spec}/generate", headers=hdr, timeout=60).json()
     print(f"UDS: spec {spec} extracted, {g['created']} tests generated (approve the spec, then review the tests)")
+    code = SAMPLES / "code"
+    for src, name in (("door_lock_ctrl_v1.c", "door_lock_ctrl.c"), ("diag_handler.c", "diag_handler.c")):
+        requests.post(f"{P}/codereview/sources", headers=hdr, timeout=60, files={"file": (name, (code / src).read_bytes())}).raise_for_status()
+    for log in ("cppcheck_report.xml", "vendor_scan.sarif"):
+        requests.post(f"{P}/codereview/logs", headers=hdr, timeout=60, files={"file": (log, (code / log).read_bytes())}).raise_for_status()
+    hld = requests.get(f"{P}/documents", timeout=30).json()[0]["id"]
+    requests.put(f"{P}/codereview/context", json={"hld_doc_id": hld}, headers=hdr, timeout=30)
+    a = requests.post(f"{P}/codereview/analyze", json={}, headers=hdr, timeout=120).json()
+    print(f"CODE: {a['new']} findings ({a['tool_findings']} from tool logs, {a['corroborated']} corroborated); "
+          f"upload data/samples/code/door_lock_ctrl_v2.c as a new revision to see fixed findings")
     print("Done. Open the UI and select project 'bcm-demo'.")
 
 

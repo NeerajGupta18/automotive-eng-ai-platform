@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<results version="2">
+  <cppcheck version="2.13"/>
+  <errors>
+    <error id="getsCalled" severity="error" msg="Obsolete function 'gets' called. It is recommended to use 'fgets' or 'gets_s' instead." verbose="..." cwe="242">
+      <location file="src/diag_handler.c" line="16" column="5"/>
+    </error>
+    <error id="arrayIndexOutOfBoundsCond" severity="warning" msg="Either the condition 'i&lt;=4' is redundant or the array 'doorState[4]' is accessed at index 4." cwe="788">
+      <location file="src/door_lock_ctrl.c" line="27" column="19"/>
+    </error>
+    <error id="memleakOnRealloc" severity="error" msg="Memory leak: buf" cwe="401">
+      <location file="src/diag_handler.c" line="40" column="5"/>
+    </error>
+    <error id="uninitvar" severity="error" msg="Uninitialized variable: retries" cwe="457">
+      <location file="src/door_lock_ctrl.c" line="47" column="9"/>
+    </error>
+    <error id="unusedFunction" severity="style" msg="The function 'Diag_Unused' is never used." cwe="561">
+      <location file="src/diag_handler.c" line="67" column="1"/>
+    </error>
+    <error id="missingInclude" severity="information" msg="Include file: not found">
+      <location file="src/other_module.c" line="3" column="1"/>
+    </error>
+  </errors>
+</results>

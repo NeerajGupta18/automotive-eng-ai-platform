@@ -1,0 +1,5 @@
+# Optional: production-quality embeddings (BGE / E5). Downloads the model on first use.
+sentence-transformers>=3.0
+# Optional: OCR for scanned PDFs (also needs the Tesseract binary installed)
+pytesseract>=0.3
+Pillow>=10.0

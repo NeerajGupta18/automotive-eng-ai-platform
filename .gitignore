@@ -1,0 +1,16 @@
+# runtime data and secrets
+storage/
+backups/
+.env
+*.db
+*.tar.gz
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+# editors / OS
+.idea/
+.vscode/
+.DS_Store

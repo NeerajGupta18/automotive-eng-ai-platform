@@ -1,0 +1,90 @@
+{
+  "guides": [
+    {
+      "id": "key-not-detected",
+      "category": "start",
+      "title": "Key not detected, or push-button start won't start",
+      "summary": "The car says the key isn't found, the remote doesn't lock or unlock, or pressing start does nothing.",
+      "symptoms": ["key not detected", "smart key not working", "push button start not working", "key fob not working",
+                   "car not starting, key not found", "remote key doesn't lock the car", "key battery low message", "chabi detect nahi ho rahi"],
+      "keywords": ["key", "fob", "remote", "smart", "push", "button", "detected", "immobiliser", "lock", "unlock"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Press the brake (automatic) or the clutch (manual) firmly while you press start."},
+        {"id": "s2", "type": "check", "text": "Hold the key right against the start button (or in the marked slot) and press start.",
+         "detail": "This works even with a flat key battery."},
+        {"id": "s3", "type": "check", "text": "Replace the key's coin battery (often a CR2032; check the one inside).",
+         "detail": "'Key not detected' is usually the first sign of a weak key battery."},
+        {"id": "s4", "type": "check", "text": "Keep phones, chargers and other keys away from the key; strong radio signals nearby can interfere."},
+        {"id": "s5", "type": "check", "text": "Try the spare key. If it works, the first key needs service."}
+      ],
+      "escalate": {"text": "The key or the car's key reader needs a check.",
+                   "tell_service": ["Whether the spare key works", "Any message on the dashboard"]}
+    },
+    {
+      "id": "battery-weak",
+      "category": "start",
+      "title": "Car won't start, or the battery is weak",
+      "summary": "Nothing happens, it clicks or cranks slowly, or it cranks but doesn't start.",
+      "symptoms": ["car not starting", "battery dead", "clicking sound when starting", "engine cranks slowly", "battery discharged",
+                   "gaadi start nahi ho rahi", "battery down ho gayi", "dashboard lights dim when starting", "car won't start in the morning"],
+      "keywords": ["start", "starting", "battery", "dead", "crank", "cranks", "click", "clicking", "jump", "discharged"],
+      "safety": "caution",
+      "steps": [
+        {"id": "s1", "type": "ask", "text": "What happens when you try to start?",
+         "options": [{"label": "Nothing, or the dashboard is dark", "next": "b1"},
+                     {"label": "Clicking, or it cranks slowly", "next": "b1"},
+                     {"label": "It cranks normally but doesn't start", "next": "e1"}]},
+        {"id": "b1", "type": "check", "text": "Switch off the headlights, AC and accessories and try again. Look for a loose or white-crusted battery clamp, without touching it with bare hands."},
+        {"id": "b2", "type": "check", "text": "Jump-start from another car with jumper cables in the order your owner's manual shows (red to the plus terminals; black to the other car's minus and then to bare metal on your engine), or call roadside assistance.",
+         "detail": "Don't jump-start a battery that is cracked, leaking or frozen."},
+        {"id": "b3", "type": "info", "text": "If it started, drive for at least 30 minutes to recharge, and get the battery tested soon. Batteries wear out faster in heat.", "next": "done"},
+        {"id": "e1", "type": "check", "text": "Check there's enough fuel (the gauge is unreliable when nearly empty), and that no key or immobiliser light is flashing; try the spare key."}
+      ],
+      "escalate": {"text": "Call your roadside assistance number or a mechanic.",
+                   "tell_service": ["What happens when you press start", "When the battery was last replaced", "Any warning lights"]}
+    },
+    {
+      "id": "tpms",
+      "category": "start",
+      "title": "Tyre pressure warning",
+      "summary": "The tyre pressure light (a tyre with an exclamation mark) is on or blinking.",
+      "symptoms": ["tyre pressure warning light", "tpms light on", "low tyre pressure warning", "tyre warning on the dashboard",
+                   "tyre mein hawa kam ka warning", "tire pressure light blinking"],
+      "keywords": ["tyre", "tire", "pressure", "tpms", "puncture", "air", "inflate"],
+      "safety": "caution",
+      "steps": [
+        {"id": "s1", "type": "info", "warn": true, "text": "Stop when it's safe and look at the tyres. If a tyre is flat or damaged, don't drive on it: change the wheel or call roadside assistance."},
+        {"id": "s2", "type": "check", "text": "Fill all tyres to the pressure on the sticker in the driver's door frame or fuel flap, with the tyres cold."},
+        {"id": "s3", "type": "check", "text": "If your car asks for it, reset the tyre pressure system after filling (a button or a menu such as Tyre pressure > Reset), then drive for a few minutes."},
+        {"id": "s4", "type": "check", "text": "On a cold morning the light can come on and go off after driving; check the pressures anyway."}
+      ],
+      "escalate": {"text": "If the light comes back the same day, a tyre may have a slow puncture: get it checked at a tyre shop.",
+                   "tell_service": ["Which tyre the car shows, if any", "Whether it blinks first and then stays on (a sensor fault)"]}
+    },
+    {
+      "id": "ev-charging",
+      "category": "start",
+      "title": "Electric car not charging",
+      "summary": "Charging doesn't start or stops, at home or at a public charger.",
+      "symptoms": ["ev not charging", "charging doesn't start", "home charger not charging the car", "charging stops in between",
+                   "public charger not working", "charge nahi ho rahi", "charging gun stuck", "ev charging very slow"],
+      "keywords": ["charge", "charging", "charger", "ev", "electric", "plug", "connector", "gun", "socket"],
+      "fuels": ["electric"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Put the car in Park and push the connector in until it clicks; check the car's charging light or screen."},
+        {"id": "s2", "type": "check", "text": "At home: check the socket's switch and the circuit breaker (MCB), and plug straight into the wall without an extension cord.",
+         "detail": "Extension cords can overheat with a car charger."},
+        {"id": "s3", "type": "check", "text": "Check the charge limit and any charging schedule in the car or its app.",
+         "detail": "Charging won't start if the battery is above the limit or a timer is set."},
+        {"id": "s4", "type": "check", "text": "At a public charger: start the session in the operator's app or with its card, and try another charging point.",
+         "detail": "Many failures are on the charger's side."},
+        {"id": "s5", "type": "info", "text": "Charging is slower above 80% and when the battery is very hot or cold. That's normal and protects the battery.",
+         "detail": "If the connector is stuck, use the release in the car's menu or app, or the manual release your owner's manual describes. Never pull it with force."}
+      ],
+      "escalate": {"text": "The car's charging system or the charger needs a check.",
+                   "tell_service": ["Home or public charger, and which one", "Any message on the car or charger", "Whether another charger works"]}
+    }
+  ]
+}

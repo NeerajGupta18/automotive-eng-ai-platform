@@ -1,0 +1,20 @@
+{
+  "appId": "app.carsaathi.owner",
+  "appName": "CarSaathi",
+  "webDir": "www",
+  "server": {
+    "url": "https://carsaathi.onrender.com",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "appendUserAgent": "CarSaathiApp",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_carsaathi",
+      "iconColor": "#1F4FA3"
+    }
+  }
+}

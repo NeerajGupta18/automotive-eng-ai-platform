@@ -6,3 +6,8 @@ reportlab>=4.0
 #   reqif ships the official OMG ReqIF XSD and an independent parser; mcp is the official MCP Python SDK client
 reqif==0.1.0
 mcp>=1.25,<2
+# Phase A car-owner service (owner/requirements.txt); its tests run on SQLite, and on PostgreSQL when OWNER_TEST_DATABASE_URL is set
+sqlalchemy>=2.0,<3
+psycopg[binary]>=3.1,<4
+# Phase D: an independent Web Push decryption to check owner/webpush.py against (tests only)
+http-ece==1.2.1

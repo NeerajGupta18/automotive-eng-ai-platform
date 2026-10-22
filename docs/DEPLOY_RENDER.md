@@ -40,8 +40,48 @@ longer on the shared free CPU).
 From then on, **every push to the connected branch triggers a new deploy**. You can follow it under
 the service's **Events** and **Logs** tabs.
 
+## Service 2: CarSaathi, the car-owner app (Phases A to D)
+
+The second service in `render.yaml`, `carsaathi`, is built from `owner/Dockerfile`: the owner API and the React app in
+one image. Unlike the engineering demo it keeps real accounts, so its data lives in a PostgreSQL database outside Render
+(Render's free PostgreSQL is deleted after 30 days). Changes to `owner/` and `owner-app/` redeploy only this service.
+
+### Accounts and keys to prepare
+
+| What | Where | Goes into |
+|---|---|---|
+| PostgreSQL database | neon.tech: a free project in *AWS Asia Pacific (Singapore)*; copy the connection string (`postgresql://...?sslmode=require`) | `OWNER_DATABASE_URL` |
+| Sending email (sign-in codes, reminders) | brevo.com: verify a sender address under *Senders*, create a key under *SMTP & API > API keys* | `BREVO_API_KEY`, and `OWNER_MAIL_FROM` = `CarSaathi <the verified address>` |
+| Web Push keys | on your computer, in the repository: `pip install cryptography`, then `python -m owner.notify vapid` | `OWNER_VAPID_PUBLIC_KEY`, `OWNER_VAPID_PRIVATE_KEY`, `OWNER_VAPID_SUBJECT` = `mailto:<your email>` |
+| The repository's name | `your-user/your-repo` on GitHub | `OWNER_GITHUB_REPO` |
+| Optional: an LLM for the help search | console.groq.com (the engineering demo's key works) | `OWNER_LLM_BASE_URL` = `https://api.groq.com/openai/v1`, `OWNER_LLM_MODEL` (e.g. `llama-3.1-8b-instant`), `OWNER_LLM_API_KEY` |
+
+Render generates `OWNER_SECRET_KEY`, `OWNER_ADMIN_TOKEN` and `OWNER_CRON_TOKEN`. Leave `OWNER_PUBLIC_URL` empty (the app
+uses the service's own `onrender.com` address) and `OWNER_FIELD_API_URL` empty (reports to the manufacturer stay dry runs
+on the public demo). Never put the VAPID private key, the Brevo key or the database URL in git.
+
+### Steps
+
+1. **Push.** If the Blueprint exists already (the engineering demo), Render applies the new `render.yaml` and creates
+   `carsaathi`; if it isn't listed after a few minutes, open *Blueprints*, your Blueprint, *Manual sync*. On a new account,
+   *New > Blueprint* creates both services and asks for every `sync: false` value in one form.
+2. **Secrets.** Render asks for `sync: false` values only when a Blueprint is first created. On an existing Blueprint, open
+   the `carsaathi` service, *Environment*, add the values from the table, then *Save, rebuild, and deploy*.
+3. **Check.** When it shows *Live*, open the address (`https://carsaathi.onrender.com`, or the one Render shows if that
+   name was taken), press *Try the demo*, then sign in with your own email: the code arrives through Brevo.
+4. **GitHub settings** (*Settings > Secrets and variables > Actions*):
+   - variable `OWNER_APP_URL` = the CarSaathi address (the Android app loads it; the daily reminder run calls it);
+   - secret `OWNER_CRON_TOKEN` = the value Render generated (`carsaathi`, *Environment*).
+5. **Android app.** *Actions > Android app > Run workflow* publishes `carsaathi.apk` as the latest release, and *Download
+   the Android app* on the login page starts working. (A build that ran before `OWNER_APP_URL` was set points at
+   `https://carsaathi.onrender.com`; run it again if your address differs.)
+6. **Daily reminders.** *Actions > CarSaathi daily reminders > Run workflow* answers with a line like
+   `{"date": ..., "people": ..., "created": ...}`. From then on it runs every day at 9:00 India time.
+
 ## Free-tier behaviour
 
+- A Render workspace gets **750 free instance hours a month**, shared by its free services. Both services sleep when
+  idle, so a demo uses far fewer; if the hours run out, Render suspends the free services until the next month.
 - The service **sleeps after about 15 minutes without visitors**. The next visit wakes it, which
   takes around a minute. Open the URL a few minutes before an interview.
 - The disk is **ephemeral**: uploads and approvals made on the live demo are lost on every restart

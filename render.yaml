@@ -4,9 +4,11 @@
 #   3. Every push to the connected branch redeploys automatically.
 # Full walkthrough: docs/DEPLOY_RENDER.md
 #
-# One free web service runs everything: the FastAPI backend on 127.0.0.1:8000 (private), the demo
-# data seeded at start, and the Streamlit UI on Render's $PORT. The free disk is ephemeral, so the
-# demo resets to the seeded data on every restart or redeploy.
+# Service 1 (automotive-eng-ai): the engineering platform. One free web service runs the FastAPI backend on
+# 127.0.0.1:8000 (private), the demo data seeded at start, and the Streamlit UI on Render's $PORT. The free disk is
+# ephemeral, so the demo resets to the seeded data on every restart or redeploy.
+# Service 2 (carsaathi): the Phase A car-owner app (API + React app in one Docker image). Its users and their cars live in
+# PostgreSQL (OWNER_DATABASE_URL, e.g. a free Neon database), so they survive restarts. See docs/PHASE_A_OWNER_APP.md.
 services:
   - type: web
     name: automotive-eng-ai
@@ -18,6 +20,12 @@ services:
     buildCommand: pip install -r requirements-render.txt && (python scripts/sil_run.py build --mutants || echo "SIL build skipped")
     startCommand: bash scripts/render_start.sh
     healthCheckPath: /_stcore/health
+    # the car-owner app (Phase A) is a separate service: its changes do not redeploy this one
+    buildFilter:
+      ignoredPaths:
+        - owner/**
+        - owner-app/**
+        - android-app/**
     envVars:
       - key: DATA_DIR
         value: /tmp/aeai-storage
@@ -59,3 +67,78 @@ services:
         value: "0"
       - key: INTEGRATION_DISPATCH_S
         value: "60"
+
+  - type: web
+    name: carsaathi
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./owner/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    # redeploy only when the owner service or its web app changes
+    buildFilter:
+      paths:
+        - owner/**
+        - owner-app/**
+    envVars:
+      - key: OWNER_ENV
+        value: production
+      # keys the stored hashes of one-time sign-in codes. Render generates a random value once.
+      - key: OWNER_SECRET_KEY
+        generateValue: true
+      # postgresql://user:password@host/db?sslmode=require (Neon or Supabase free tier). Without it the service uses SQLite
+      # on the ephemeral disk and every restart signs everyone out and deletes their cars.
+      - key: OWNER_DATABASE_URL
+        sync: false
+      # sign-in codes by email through Brevo's HTTPS API (free: 300 emails a day). Render's free plan blocks outgoing SMTP
+      # ports, so SMTP_HOST/SMTP_USER/SMTP_PASSWORD only work on a paid instance or another host.
+      - key: OWNER_OTP_DELIVERY
+        value: email
+      - key: BREVO_API_KEY
+        sync: false
+      # a sender address verified in Brevo, e.g. CarSaathi <you@gmail.com>
+      - key: OWNER_MAIL_FROM
+        sync: false
+      # "Try the demo": private sandbox accounts with sample cars, deleted after 24 hours
+      - key: OWNER_DEMO_LOGIN
+        value: "1"
+      # owner/repo on GitHub: "Download the Android app" goes to the latest release built by .github/workflows/android-app.yml
+      - key: OWNER_GITHUB_REPO
+        sync: false
+      # Render's proxy appends the visitor's address to X-Forwarded-For; per-visitor rate limits use that entry
+      - key: OWNER_PROXY_HOPS
+        value: "1"
+      # Phase B: reports to the manufacturer go to the engineering platform's API. The engineering demo's API is private on
+      # Render's free plan (only its Streamlit UI is public), so this demo keeps them as dry runs: prepared and shown, not sent.
+      - key: OWNER_FIELD_LIVE
+        value: "0"
+      - key: OWNER_FIELD_API_URL
+        sync: false
+      # optional: an OpenAI-compatible LLM (e.g. Groq) that may pick a guide when the search is unsure; leave empty for rules only
+      - key: OWNER_LLM_BASE_URL
+        sync: false
+      - key: OWNER_LLM_MODEL
+        sync: false
+      - key: OWNER_LLM_API_KEY
+        sync: false
+      # bearer token for the anonymous help statistics (/api/help/stats); Render generates one
+      - key: OWNER_ADMIN_TOKEN
+        generateValue: true
+      # Phase D: notifications and service booking (docs/PHASE_D_NOTIFICATIONS_BOOKING.md).
+      # The address in reminder emails and in the workshop's booking link. Empty: Render's own (RENDER_EXTERNAL_URL).
+      - key: OWNER_PUBLIC_URL
+        sync: false
+      # bearer token of the daily reminder run (POST /api/notify/run). Copy it into the GitHub secret OWNER_CRON_TOKEN,
+      # which .github/workflows/owner-reminders.yml sends every morning at 9:00 India time.
+      - key: OWNER_CRON_TOKEN
+        generateValue: true
+      # Web Push for browser notifications: `python -m owner.notify vapid` prints a key pair. Set it once and keep it;
+      # a new pair makes every browser turn notifications on again. Without it, email and the in-app inbox still work.
+      - key: OWNER_VAPID_PUBLIC_KEY
+        sync: false
+      - key: OWNER_VAPID_PRIVATE_KEY
+        sync: false
+      # a contact the push services can reach: mailto:you@example.com
+      - key: OWNER_VAPID_SUBJECT
+        sync: false

@@ -1,0 +1,132 @@
+{
+  "guides": [
+    {
+      "id": "bt-pair",
+      "category": "bluetooth",
+      "title": "Phone won't pair with the car",
+      "summary": "The car doesn't appear on the phone, pairing fails, or a new phone won't connect.",
+      "symptoms": ["phone won't pair with the car", "bluetooth not connecting", "car name not showing in the bluetooth list",
+                   "pairing failed", "new phone won't connect to the car", "pin code doesn't match", "bluetooth connect nahi ho raha",
+                   "can't find the car on my phone", "bluetooth pairing error"],
+      "keywords": ["bluetooth", "pair", "pairing", "connect", "phone", "pin", "code", "device"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Open Bluetooth or Phone settings on the car's screen and choose 'Add device' or 'Pair new phone'.",
+         "detail": "Most cars only accept a new phone while this screen is open, and only when the car is standing still (some only in Park or with the handbrake on)."},
+        {"id": "s2", "type": "check", "text": "On the phone, switch Bluetooth off and on, search again and pick the car's name.",
+         "detail": "Keep the phone near the screen, and switch off battery saver and airplane mode."},
+        {"id": "s3", "type": "check", "text": "Check that the code is the same on both screens and accept on both, including 'Allow access to contacts' if asked.",
+         "detail": "If you wait too long, pairing times out. Start again from the car's 'Add device' screen."},
+        {"id": "s4", "type": "check", "text": "Delete the car from the phone's Bluetooth list and the phone from the car's list, then pair again.",
+         "detail": "An old pairing is the most common cause. Many cars remember only 5 to 10 phones, so delete phones you no longer use."},
+        {"id": "s5", "type": "check", "text": "Restart both: switch the phone off and on; switch the car off, lock it, wait 5 minutes and start again.",
+         "detail": "This resets the car's media system. Switch off Bluetooth on other phones in the car while you pair, so they don't take the connection."},
+        {"id": "s6", "type": "check", "text": "Try pairing another phone. If that works, update your phone's software and reset its network settings, then pair again.",
+         "detail": "Resetting network settings also forgets saved Wi-Fi networks and other Bluetooth devices."}
+      ],
+      "escalate": {"text": "The car's Bluetooth may need a software update or a check at the service centre.",
+                   "tell_service": ["Your phone model and its software version", "Whether any other phone pairs with the car",
+                                    "Any message on the car's screen (a photo helps)"]}
+    },
+    {
+      "id": "bt-reconnect",
+      "category": "bluetooth",
+      "title": "Phone doesn't reconnect when I start the car",
+      "summary": "You have to connect Bluetooth by hand every time, or the car connects to someone else's phone.",
+      "symptoms": ["phone doesn't connect automatically when I start the car", "have to connect bluetooth every time",
+                   "auto connect not working", "car connects to my wife's phone instead of mine", "bluetooth doesn't reconnect",
+                   "har baar bluetooth connect karna padta hai", "phone not connecting automatically"],
+      "keywords": ["automatic", "automatically", "reconnect", "every", "time", "auto", "connect", "priority", "start"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Keep the phone's Bluetooth on and unlock the phone once when you start the car.",
+         "detail": "Battery saver can switch Bluetooth off, and some phones stop background connections after a long time locked."},
+        {"id": "s2", "type": "check", "text": "In the car's list of phones, make your phone the preferred or priority phone.",
+         "detail": "With two phones paired, the car connects to the priority phone or to the one used last."},
+        {"id": "s3", "type": "check", "text": "On the phone, open the car's Bluetooth settings and allow both calls and media audio.",
+         "detail": "If only one is allowed, the car may not treat the phone as connected."},
+        {"id": "s4", "type": "check", "text": "Let Bluetooth run without battery restrictions (Android: battery settings for the Bluetooth app).",
+         "detail": "Some phones close background connections to save battery."},
+        {"id": "s5", "type": "check", "text": "Delete the pairing on both the phone and the car, then pair again."}
+      ],
+      "escalate": {"text": "The car may need a media system software update.",
+                   "tell_service": ["Your phone model and software version", "How long after starting the car you waited",
+                                    "Whether other phones reconnect by themselves"]}
+    },
+    {
+      "id": "bt-drops",
+      "category": "bluetooth",
+      "title": "Bluetooth keeps disconnecting",
+      "summary": "The connection drops while driving, calls cut, or music stops and starts.",
+      "symptoms": ["bluetooth disconnects while driving", "connection keeps dropping", "bluetooth baar baar disconnect ho raha hai",
+                   "calls cut in the car", "phone disconnects from the car randomly", "bluetooth connection unstable"],
+      "keywords": ["disconnect", "disconnects", "drops", "dropping", "cut", "unstable", "random", "keeps"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Move the phone out of metal holders and closed compartments; try it on the dashboard or in a door pocket.",
+         "detail": "Metal and some wireless chargers weaken the Bluetooth signal."},
+        {"id": "s2", "type": "check", "text": "Disconnect other Bluetooth devices from the phone: smartwatch, earbuds, a second car.",
+         "detail": "The phone can hand the sound to a watch or earbuds and drop the car."},
+        {"id": "s3", "type": "check", "text": "Switch off battery saver and let Bluetooth run without battery restrictions."},
+        {"id": "s4", "type": "ask", "text": "When does it drop?",
+         "options": [{"label": "When I plug in a USB cable", "next": "u1"},
+                     {"label": "At random", "next": "s5"},
+                     {"label": "When a call comes in", "next": "s5"}]},
+        {"id": "u1", "type": "info", "text": "That's normal: when you plug in, Android Auto or CarPlay takes over the phone. Calls and music then go through Android Auto or CarPlay instead of Bluetooth.",
+         "next": "done"},
+        {"id": "s5", "type": "check", "text": "Update the phone's software, then delete and redo the pairing."}
+      ],
+      "escalate": {"text": "The car's Bluetooth module may need a check or a software update.",
+                   "tell_service": ["How often it drops and for how long", "Whether it also happens with another phone",
+                                    "Your phone model and software version"]}
+    },
+    {
+      "id": "call-audio",
+      "category": "bluetooth",
+      "title": "Callers can't hear me, or I can't hear them",
+      "summary": "No sound in calls, low voice, echo, or the microphone doesn't pick you up.",
+      "symptoms": ["caller can't hear me", "I can't hear the caller", "no sound in calls", "call voice is very low", "echo on calls",
+                   "microphone not working in the car", "call mein awaaz nahi aa rahi", "other person can't hear me on bluetooth",
+                   "voice breaking on calls"],
+      "keywords": ["call", "calls", "caller", "hear", "microphone", "mic", "echo", "voice", "volume"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "ask", "text": "What is the problem?",
+         "options": [{"label": "They can't hear me, or hear an echo", "next": "m1"},
+                     {"label": "I can't hear them", "next": "v1"}]},
+        {"id": "m1", "type": "check", "text": "Close the windows, turn the fan down, and speak towards the microphone (usually in the roof near the cabin light).",
+         "detail": "Wind and fan noise are the most common causes of poor call quality."},
+        {"id": "m2", "type": "check", "text": "Check that nothing covers the microphone (a dashcam, a sunglasses holder) and that the call isn't muted on the car's screen."},
+        {"id": "m3", "type": "check", "text": "During a call, choose the car as the audio output on the phone, not the phone itself or earbuds.", "next": "c1"},
+        {"id": "v1", "type": "check", "text": "Turn the volume up during the call.",
+         "detail": "In most cars call volume is set separately from music volume."},
+        {"id": "v2", "type": "check", "text": "During a call, check the phone sends the sound to the car, and no earbuds or watch are connected.", "next": "c1"},
+        {"id": "c1", "type": "check", "text": "Delete and redo the pairing, and update the phone's software."}
+      ],
+      "escalate": {"text": "The microphone or the car's phone module may need a check.",
+                   "tell_service": ["Which way the problem goes: they can't hear you, or you can't hear them",
+                                    "Whether it happens on every call or only some", "Whether it also happens with another phone"]}
+    },
+    {
+      "id": "call-contacts",
+      "category": "bluetooth",
+      "title": "Contacts or call history not showing",
+      "summary": "The car's phonebook is empty, names don't show for calls, or recent calls are missing.",
+      "symptoms": ["contacts not showing in the car", "phonebook is empty", "call history missing", "recent calls not visible",
+                   "contacts sync nahi ho rahe", "names not showing when someone calls", "car shows numbers instead of names"],
+      "keywords": ["contacts", "phonebook", "names", "history", "recent", "sync", "call log"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Allow the car to use your contacts: on Android, open the car's Bluetooth settings and turn on 'Contacts and call history'; on iPhone, Settings > Bluetooth > the car's (i) > Sync Contacts."},
+        {"id": "s2", "type": "check", "text": "Wait a few minutes after connecting.",
+         "detail": "Large phonebooks take time to download, and some cars load contacts only when parked."},
+        {"id": "s3", "type": "check", "text": "Look for a 'Download contacts' or 'Sync' button in the car's phone menu, and check it isn't showing favourites only."},
+        {"id": "s4", "type": "check", "text": "Save the contacts in the phone's own contacts app.",
+         "detail": "Contacts that exist only in a messaging app or a work account may not be shared with the car."},
+        {"id": "s5", "type": "check", "text": "Delete and redo the pairing, and accept contact access when the phone asks."}
+      ],
+      "escalate": {"text": "The car's phone module may need a software update.",
+                   "tell_service": ["Your phone model and software version", "Whether contacts appear for another phone"]}
+    }
+  ]
+}

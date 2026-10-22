@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install pip-audit -r requirements.txt && pip-audit -r requirements.txt
+      - run: pip install pip-audit -r requirements.txt && pip-audit -r requirements.txt -r owner/requirements.txt
 
   code-review-gate:                       # the platform's own analyzer as a CI gate on the sample firmware; uploads SARIF
     runs-on: ubuntu-latest
@@ -91,3 +91,52 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env && docker compose config -q && docker build -t automotive-eng-ai .
+
+  owner-postgres:                         # Phase A: the car-owner service's tests on PostgreSQL 16 (production database)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: owner_test }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r owner/requirements.txt pytest httpx pyyaml http-ece==1.2.1
+      # --noconftest: the shared fixtures belong to the engineering platform, whose dependencies this job does not install
+      - run: >
+          python -m pytest -q --noconftest tests/test_owner_app.py tests/test_owner_help.py tests/test_owner_costs_health.py
+          tests/test_owner_notify_booking.py
+        env:
+          AEAI_DOTENV: "0"
+          OWNER_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/owner_test
+
+  owner-help-quality:                     # Phase B: help search on 210 labelled owner descriptions; fails if quality or safety regresses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python scripts/eval_owner_help.py --check --out eval-ci/owner_help
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: owner-help-eval, path: eval-ci/owner_help }
+
+  owner-web:                              # Phase A: the owner app builds; the Docker image builds and answers its health check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm, cache-dependency-path: owner-app/package-lock.json }
+      - run: npm ci --no-audit --no-fund && npm test && npm run build          # npm test: the ELM327 Bluetooth driver (Phase C)
+        working-directory: owner-app
+      - run: docker build -f owner/Dockerfile -t carsaathi .
+      - name: Smoke test the image
+        run: |
+          docker run -d --name cs -p 10000:10000 -e OWNER_SECRET_KEY=$(python3 -c "import secrets;print(secrets.token_urlsafe(48))") carsaathi
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:10000/api/health && break; sleep 1; done
+          curl -fsS http://127.0.0.1:10000/ | grep -q '<div id="root">'
+          curl -fsS -X POST http://127.0.0.1:10000/api/auth/demo | grep -q '"token"'
+          docker logs cs

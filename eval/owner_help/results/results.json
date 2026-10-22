@@ -1,0 +1,227 @@
+{
+  "queries": {
+    "metrics": {
+      "queries": 124,
+      "scored": 100,
+      "top1": 0.99,
+      "top3": 1.0,
+      "safety_recall": 1.0,
+      "false_alarms": 0,
+      "unsure_out_of_scope": 1.0,
+      "lights": 1.0,
+      "hinglish_top1": 1.0,
+      "hinglish_n": 21
+    },
+    "gates": {
+      "top1": true,
+      "top3": true,
+      "safety_recall": true,
+      "false_alarms": true,
+      "unsure_out_of_scope": true,
+      "lights": true
+    },
+    "passed": true,
+    "failures": [
+      {
+        "q": "my new iphone is not showing the car in bluetooth",
+        "expected": "bt-pair",
+        "got": [
+          "carplay-start",
+          "bt-pair",
+          "call-contacts"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      }
+    ]
+  },
+  "heldout": {
+    "metrics": {
+      "queries": 50,
+      "scored": 43,
+      "top1": 0.8372093023255814,
+      "top3": 0.9767441860465116,
+      "safety_recall": 1.0,
+      "false_alarms": 0,
+      "unsure_out_of_scope": 1.0,
+      "lights": null,
+      "hinglish_top1": 1.0,
+      "hinglish_n": 1
+    },
+    "gates": {
+      "top1": true,
+      "top3": true,
+      "safety_recall": true,
+      "false_alarms": true
+    },
+    "passed": true,
+    "failures": [
+      {
+        "q": "two phones paired and it always picks the other one",
+        "expected": "bt-reconnect",
+        "got": [
+          "bt-pair",
+          "call-audio",
+          "bt-reconnect"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "on long drives the phone connection cuts off and comes back after a minute",
+        "expected": "bt-drops",
+        "got": [
+          "projection-drops",
+          "bt-drops",
+          "audio-usb"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "phone says connected to car audio yet the songs come out of the phone speaker",
+        "expected": "audio-bt-music",
+        "got": [
+          "audio-no-sound",
+          "bt-pair",
+          "audio-bt-music"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": false,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "carplay keeps restarting itself mid route",
+        "expected": "projection-drops",
+        "got": [
+          "screen-frozen",
+          "projection-drops",
+          "adas-lane"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "when i say call mom the car calls someone else",
+        "expected": "voice",
+        "got": [
+          "call-contacts",
+          "call-audio",
+          "bt-drops"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "when I put the car in reverse the screen stays blank",
+        "expected": "camera-reverse",
+        "got": [
+          "screen-frozen",
+          "camera-reverse",
+          "parking-sensors"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "after I got the windshield changed the lane assist doesn't work anymore",
+        "expected": "adas-unavailable",
+        "got": [
+          "adas-lane",
+          "adas-unavailable",
+          "voice"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": false,
+        "why": "wrong guide first"
+      }
+    ]
+  },
+  "heldout2": {
+    "metrics": {
+      "queries": 36,
+      "scored": 31,
+      "top1": 0.9032258064516129,
+      "top3": 1.0,
+      "safety_recall": 1.0,
+      "false_alarms": 0,
+      "unsure_out_of_scope": 1.0,
+      "lights": null,
+      "hinglish_top1": 1.0,
+      "hinglish_n": 4
+    },
+    "gates": {
+      "top1": true,
+      "top3": true,
+      "safety_recall": true,
+      "false_alarms": true
+    },
+    "passed": true,
+    "failures": [
+      {
+        "q": "audio from the phone keeps cutting in and out over bluetooth while driving",
+        "expected": "bt-drops",
+        "got": [
+          "audio-bt-music",
+          "bt-drops",
+          "projection-drops"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": true,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "touchscreen registers touches in the wrong place",
+        "expected": "screen-touch",
+        "got": [
+          "nav-gps",
+          "screen-touch",
+          "screen-frozen"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": false,
+        "why": "wrong guide first"
+      },
+      {
+        "q": "Nexon ne expressway par bina wajah emergency brake lagaya",
+        "expected": "adas-phantom",
+        "got": [
+          "adas-no-brake",
+          "adas-phantom",
+          "adas-acc"
+        ],
+        "urgent": null,
+        "expected_urgent": null,
+        "lights": [],
+        "confident": false,
+        "why": "wrong guide first"
+      }
+    ]
+  }
+}

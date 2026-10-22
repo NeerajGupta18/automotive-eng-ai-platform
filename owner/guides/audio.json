@@ -1,0 +1,74 @@
+{
+  "guides": [
+    {
+      "id": "audio-no-sound",
+      "category": "audio",
+      "title": "No sound from the speakers",
+      "summary": "The radio or music shows as playing, but nothing comes out, or some speakers are silent.",
+      "symptoms": ["no sound from the speakers", "speakers not working", "radio has no sound", "volume not working",
+                   "music system awaaz nahi aa rahi", "one speaker not working", "sound only from one side", "audio muted"],
+      "keywords": ["sound", "speaker", "speakers", "volume", "mute", "radio", "silent", "balance", "fader"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Turn the volume up and look for a mute symbol on the screen.",
+         "detail": "In many cars, pressing the volume knob or a steering wheel button mutes the sound."},
+        {"id": "s2", "type": "check", "text": "Press Source or Media and pick the source you want: Radio, Bluetooth or USB."},
+        {"id": "s3", "type": "ask", "text": "Is the sound missing from all speakers or only some?",
+         "options": [{"label": "All speakers", "next": "s4"}, {"label": "Only some", "next": "p1"}]},
+        {"id": "s4", "type": "check", "text": "Switch the car off, lock it, wait 5 minutes and start again.",
+         "detail": "This restarts the media system.", "next": "escalate"},
+        {"id": "p1", "type": "check", "text": "Open the sound settings and set balance and fader to the centre.",
+         "detail": "When balance or fader is turned fully to one side, the other speakers go quiet."}
+      ],
+      "escalate": {"text": "A speaker, its wiring or the amplifier may need a check.",
+                   "tell_service": ["Which speakers are silent", "Whether it's every source or only one",
+                                    "When it started: after an accessory was fitted, battery work or a car wash"]}
+    },
+    {
+      "id": "audio-bt-music",
+      "category": "audio",
+      "title": "Bluetooth music won't play or keeps skipping",
+      "summary": "Songs from the phone don't play in the car, stutter, or the song name doesn't show.",
+      "symptoms": ["bluetooth music not playing", "songs skip in the car", "music stutters over bluetooth", "spotify not playing in the car",
+                   "gaana nahi chal raha bluetooth pe", "song name not showing on the screen", "music connected but no sound"],
+      "keywords": ["music", "song", "songs", "spotify", "stream", "streaming", "skip", "stutter", "bluetooth", "media"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Choose Bluetooth audio as the source in the car, then press play once on the phone."},
+        {"id": "s2", "type": "check", "text": "On the phone, open the car's Bluetooth settings and allow media audio."},
+        {"id": "s3", "type": "check", "text": "Close other apps that play sound (videos, games), and check the sound isn't going to earbuds or a watch."},
+        {"id": "s4", "type": "check", "text": "If songs skip, download them for offline play.",
+         "detail": "Streaming stutters when the mobile signal drops, which happens a lot on highways and in tunnels."},
+        {"id": "s5", "type": "check", "text": "Restart the phone, and restart the car's system: car off, locked, wait 5 minutes."},
+        {"id": "s6", "type": "check", "text": "Delete and redo the pairing."}
+      ],
+      "escalate": {"text": "The car's media system may need a software update.",
+                   "tell_service": ["The music app you use", "Whether it happens with another phone", "Your phone model and software version"]}
+    },
+    {
+      "id": "audio-usb",
+      "category": "audio",
+      "title": "USB music or phone not detected",
+      "summary": "A pen drive isn't read, or the phone doesn't charge or play through USB.",
+      "symptoms": ["usb not working", "pen drive not detected", "usb songs not playing", "phone not charging in the car",
+                   "usb port not charging", "pendrive ke gaane nahi chal rahe", "car doesn't read my usb stick"],
+      "keywords": ["usb", "pen", "drive", "pendrive", "stick", "port", "cable", "charging", "charge", "mp3"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Try another USB port.",
+         "detail": "Some ports only charge; usually only one carries music and data."},
+        {"id": "s2", "type": "check", "text": "Use a short data cable in good condition, or try a different one.",
+         "detail": "Many cheap cables can only charge."},
+        {"id": "s3", "type": "ask", "text": "Is it a pen drive or a phone?",
+         "options": [{"label": "A pen drive", "next": "u1"}, {"label": "A phone", "next": "u2"}]},
+        {"id": "u1", "type": "check", "text": "Try a smaller pen drive formatted as FAT32 with a few MP3 files.",
+         "detail": "Many cars only read FAT32 drives up to 32 GB and common formats such as MP3, AAC or WMA. Your owner's manual lists what your car reads.",
+         "next": "escalate"},
+        {"id": "u2", "type": "check", "text": "Unlock the phone and allow the connection when asked (Android: 'File transfer' or 'Android Auto'; iPhone: 'Trust')."},
+        {"id": "u3", "type": "check", "text": "Look for lint in the phone's charging port and remove it gently with a wooden toothpick, never metal."}
+      ],
+      "escalate": {"text": "The USB port or its wiring may need a check.",
+                   "tell_service": ["Which port and which device", "Whether the port charges but doesn't play, or does nothing"]}
+    }
+  ]
+}

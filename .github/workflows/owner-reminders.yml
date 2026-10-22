@@ -1,0 +1,34 @@
+name: CarSaathi daily reminders
+
+# Phase D: starts the owner app's daily notification run (reminder emails, push to browsers, the in-app inbox) at 9:00 India
+# time. A free Render instance sleeps when idle, so the run is started from here: the first request wakes it up.
+# Set once in the repository (Settings > Secrets and variables > Actions):
+#   variable OWNER_APP_URL    the site, e.g. https://carsaathi.onrender.com (the Android build uses it too)
+#   secret   OWNER_CRON_TOKEN the same value as OWNER_CRON_TOKEN on the server
+# Without them the job only prints a notice. Each notification is made once, so an extra run (by hand) sends nothing twice.
+
+on:
+  schedule:
+    - cron: "30 3 * * *"          # 03:30 UTC = 09:00 IST
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Start the daily run
+        env:
+          OWNER_APP_URL: ${{ vars.OWNER_APP_URL }}
+          OWNER_CRON_TOKEN: ${{ secrets.OWNER_CRON_TOKEN }}
+        run: |
+          if [ -z "$OWNER_APP_URL" ] || [ -z "$OWNER_CRON_TOKEN" ]; then
+            echo "::notice::Set the OWNER_APP_URL variable and the OWNER_CRON_TOKEN secret to send daily reminders"
+            exit 0
+          fi
+          # a sleeping free instance needs up to a minute to wake: retry until it answers
+          curl -fsS --retry 6 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST -H "Authorization: Bearer $OWNER_CRON_TOKEN" "$OWNER_APP_URL/api/notify/run"
+          echo

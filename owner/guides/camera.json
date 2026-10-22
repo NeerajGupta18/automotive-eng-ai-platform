@@ -1,0 +1,47 @@
+{
+  "guides": [
+    {
+      "id": "camera-reverse",
+      "category": "camera",
+      "title": "Reverse camera blank or blurry",
+      "summary": "The parking camera shows a black screen, a blurry or foggy picture, or a 'not available' message.",
+      "symptoms": ["reverse camera not working", "rear camera blurry", "parking camera black screen", "camera not showing when reversing",
+                   "backup camera not working", "reverse camera foggy", "reverse camera nahi dikh raha", "camera picture has lines"],
+      "keywords": ["camera", "reverse", "rear", "parking", "backup", "blurry", "foggy", "black", "lens"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Clean the camera lens (above the number plate or near the boot handle) with a soft damp cloth.",
+         "detail": "Mud and water drops cause most blurry pictures."},
+        {"id": "s2", "type": "ask", "text": "What do you see when you reverse?",
+         "options": [{"label": "A black screen or 'camera not available'", "next": "b1"},
+                     {"label": "A picture, but foggy from inside", "next": "f1"},
+                     {"label": "A picture with lines or flicker", "next": "escalate"}]},
+        {"id": "b1", "type": "check", "text": "Switch the car off, lock it, wait 5 to 10 minutes, start and try reverse again."},
+        {"id": "b2", "type": "check", "text": "Think back: was an accessory (dashcam, screen, reversing lights) fitted, or the rear bumper repaired recently?",
+         "detail": "Wiring disturbed during fitting or repair is a common cause; tell the workshop.", "next": "escalate"},
+        {"id": "f1", "type": "info", "text": "Moisture inside the camera can't be cleaned from outside and needs service, often under warranty.", "next": "escalate"}
+      ],
+      "escalate": {"text": "The camera or its wiring needs a check.",
+                   "tell_service": ["Black screen, foggy picture or lines", "Whether it started after rain or a car wash",
+                                    "Any recent accessory fitting or rear bumper repair"]}
+    },
+    {
+      "id": "parking-sensors",
+      "category": "camera",
+      "title": "Parking sensors beep all the time, or not at all",
+      "summary": "The sensors beep with nothing behind the car, beep continuously, or stay silent.",
+      "symptoms": ["parking sensor beeping continuously", "sensor beeps with nothing behind", "parking sensors not working",
+                   "reverse sensor not beeping", "sensor beep nahi kar raha", "parking sensor false alarm"],
+      "keywords": ["sensor", "sensors", "parking", "beep", "beeping", "reverse", "bumper"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Clean the round sensors in the bumper.", "detail": "Mud, water, dust or a sticker makes them beep all the time."},
+        {"id": "s2", "type": "check", "text": "Check nothing sits in front of a sensor: a tow hook, a bike carrier, a number plate frame or a bumper guard."},
+        {"id": "s3", "type": "check", "text": "Try on a flat, dry surface; heavy rain and steep ramps can cause false beeps."},
+        {"id": "s4", "type": "check", "text": "Check the parking sensors aren't switched off (a button with a P and sound waves, or a setting on the screen)."}
+      ],
+      "escalate": {"text": "A sensor or its wiring may need a check.",
+                   "tell_service": ["Front or rear, and which side if the car shows it", "Any recent bumper repair or painting"]}
+    }
+  ]
+}

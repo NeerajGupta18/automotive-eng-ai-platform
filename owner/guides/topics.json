@@ -1,0 +1,12 @@
+{
+  "note": "Help topics shown in the app, in this order. Guides name their topic in 'category'.",
+  "topics": [
+    {"id": "bluetooth", "title": "Bluetooth and calls", "icon": "bluetooth"},
+    {"id": "audio", "title": "Music and sound", "icon": "music"},
+    {"id": "projection", "title": "Android Auto and CarPlay", "icon": "phone"},
+    {"id": "screen", "title": "Screen, maps and voice", "icon": "screen"},
+    {"id": "camera", "title": "Cameras and parking sensors", "icon": "camera"},
+    {"id": "adas", "title": "Driver assistance (ADAS)", "icon": "radar"},
+    {"id": "start", "title": "Keys, battery, tyres and charging", "icon": "key"}
+  ]
+}

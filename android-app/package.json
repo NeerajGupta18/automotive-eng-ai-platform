@@ -1,0 +1,19 @@
+{
+  "name": "carsaathi-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CarSaathi Android app: a Capacitor 7 wrapper that loads the live CarSaathi site (server.url), so every web deploy updates the app",
+  "scripts": {
+    "add": "cap add android",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^7.3.2",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.7"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

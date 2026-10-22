@@ -1,0 +1,47 @@
+name: Android app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - run: npm install --no-audit --no-fund
+      - name: Point the app at the live site
+        env:
+          OWNER_APP_URL: ${{ vars.OWNER_APP_URL }}
+        run: |
+          if [ -n "$OWNER_APP_URL" ]; then
+            node -e "const f='capacitor.config.json',c=JSON.parse(require('fs').readFileSync(f));c.server.url=process.env.OWNER_APP_URL;require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
+          fi
+          node -e "console.log('server.url =', require('./capacitor.config.json').server.url)"
+      - run: npx cap add android
+      - run: bash scripts/brand.sh
+      - name: Build the APK
+        working-directory: android-app/android
+        run: ./gradlew assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk carsaathi.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-${{ github.run_number }}
+          name: CarSaathi Android ${{ github.run_number }}
+          body: Debug-signed CarSaathi APK built from ${{ github.sha }}. It loads the live site, so web updates need no new APK.
+          files: android-app/carsaathi.apk
+          make_latest: true

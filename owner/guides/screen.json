@@ -1,0 +1,88 @@
+{
+  "guides": [
+    {
+      "id": "screen-frozen",
+      "category": "screen",
+      "title": "Touchscreen frozen, blank or restarting",
+      "summary": "The infotainment screen hangs, stays black, is stuck on the logo, or restarts by itself.",
+      "symptoms": ["screen frozen", "touchscreen hangs", "infotainment screen black", "screen keeps restarting", "display not turning on",
+                   "screen hang ho gaya", "stuck on the logo", "music system restarting again and again", "screen not working"],
+      "keywords": ["screen", "touchscreen", "display", "infotainment", "frozen", "hang", "black", "blank", "restart", "reboot", "logo"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Tap the screen or press the power or home button, and check the brightness and any 'screen off' setting.",
+         "detail": "Some screens switch off or dim fully at night."},
+        {"id": "s2", "type": "check", "text": "Press and hold the power or volume knob for about 10 seconds; many cars restart the screen this way.",
+         "detail": "Your owner's manual says which button restarts your system."},
+        {"id": "s3", "type": "check", "text": "Switch the car off, lock it, and wait 5 to 10 minutes before starting again.",
+         "detail": "The system only switches off fully once the car is locked and goes to sleep; a short stop doesn't reset it."},
+        {"id": "s4", "type": "check", "text": "Unplug USB devices and disconnect phones, then restart.",
+         "detail": "A damaged pen drive or a phone can make the system restart again and again."}
+      ],
+      "escalate": {"text": "A software update at the service centre often fixes freezes and restarts.",
+                   "tell_service": ["When it freezes or restarts, and how often", "What was connected at the time",
+                                    "The system's software version (usually under Settings > System > About)"]}
+    },
+    {
+      "id": "screen-touch",
+      "category": "screen",
+      "title": "Touch doesn't respond, or the screen touches itself",
+      "summary": "Parts of the screen don't react, touches register late, or the screen presses buttons on its own.",
+      "symptoms": ["touch not working", "screen doesn't respond to touch", "ghost touch", "screen pressing buttons by itself",
+                   "touch delay", "touch kaam nahi kar raha", "some part of the screen not working"],
+      "keywords": ["touch", "ghost", "respond", "responding", "delay", "tap", "press"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Clean the screen with a dry microfibre cloth; don't spray anything straight on it."},
+        {"id": "s2", "type": "check", "text": "Remove a screen protector or a phone mount that rests on the screen's edge.",
+         "detail": "Pressure on the edge or an air bubble under a protector causes ghost touches."},
+        {"id": "s3", "type": "check", "text": "Cool the cabin if the car stood in the sun; hot screens respond badly."},
+        {"id": "s4", "type": "check", "text": "Switch the car off, lock it, wait 5 to 10 minutes and start again."}
+      ],
+      "escalate": {"text": "The touch panel may need a check or replacement under warranty.",
+                   "tell_service": ["Which part of the screen", "Whether it's worse when hot", "A short video of the ghost touches"]}
+    },
+    {
+      "id": "nav-gps",
+      "category": "screen",
+      "title": "Navigation shows the wrong location",
+      "summary": "The car on the map is in the wrong place, the GPS signal is lost, or the maps are out of date.",
+      "symptoms": ["gps showing wrong location", "navigation not working", "map shows the car in the wrong place", "gps signal lost",
+                   "location galat dikha raha hai", "maps not updating", "navigation lost signal"],
+      "keywords": ["gps", "navigation", "map", "maps", "location", "signal", "route"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "ask", "text": "Which navigation do you use?",
+         "options": [{"label": "The car's own maps", "next": "b1"},
+                     {"label": "Google Maps or Apple Maps through Android Auto or CarPlay", "next": "p1"}]},
+        {"id": "b1", "type": "check", "text": "Drive in an open area for a few minutes, away from basements and flyovers.",
+         "detail": "GPS needs a clear view of the sky."},
+        {"id": "b2", "type": "check", "text": "Check whether a metallic sun film on the windscreen sits over the GPS antenna.",
+         "detail": "Metallic films block GPS signals."},
+        {"id": "b3", "type": "info", "text": "Ask the service centre for a map update if roads are missing; built-in maps need updates.", "next": "escalate"},
+        {"id": "p1", "type": "check", "text": "The phone does the navigation: switch on its location with high accuracy and allow Maps to use it."},
+        {"id": "p2", "type": "check", "text": "Keep the phone where it can see the sky (not under the armrest) and check its own map shows the right place."}
+      ],
+      "escalate": {"text": "The GPS antenna or the navigation software may need a check.",
+                   "tell_service": ["Built-in maps or phone maps", "Where the location goes wrong", "The map version if the car shows it"]}
+    },
+    {
+      "id": "voice",
+      "category": "screen",
+      "title": "Voice commands don't work",
+      "summary": "The car doesn't react to voice commands or misunderstands them.",
+      "symptoms": ["voice command not working", "voice assistant doesn't understand me", "voice recognition not working",
+                   "hey google not working in the car", "siri not working in the car", "voice control nahi samajhta"],
+      "keywords": ["voice", "command", "commands", "assistant", "recognition", "siri", "google", "speak"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Press the voice button on the steering wheel, wait for the beep, then speak normally in short phrases like 'Call Rahul'."},
+        {"id": "s2", "type": "check", "text": "Close the windows and turn the fan down.", "detail": "Voice control uses the same microphone as calls."},
+        {"id": "s3", "type": "check", "text": "Check the language: the car's own voice control may understand English (India) better; with Android Auto or CarPlay, Google Assistant or Siri listen instead, so check their language on the phone."},
+        {"id": "s4", "type": "check", "text": "Save contacts with full first and last names; nicknames and emoji are hard to recognise."}
+      ],
+      "escalate": {"text": "The microphone may need a check.",
+                   "tell_service": ["Whether calls have the same problem (then it's the microphone)", "The command you tried"]}
+    }
+  ]
+}

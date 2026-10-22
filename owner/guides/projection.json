@@ -1,0 +1,75 @@
+{
+  "guides": [
+    {
+      "id": "aa-start",
+      "category": "projection",
+      "title": "Android Auto doesn't start",
+      "summary": "The phone is plugged in or nearby, but Android Auto doesn't appear on the car's screen.",
+      "symptoms": ["android auto not working", "android auto not connecting", "android auto not showing on the screen",
+                   "android auto nahi chal raha", "wireless android auto not connecting", "android auto stuck on loading",
+                   "phone screen not showing on the car display"],
+      "keywords": ["android", "auto", "androidauto", "projection", "wireless", "cable", "google"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Check that your car supports Android Auto and that it is switched on in the car's settings (often under Smartphone connection)."},
+        {"id": "s2", "type": "check", "text": "Park the car, unlock the phone, and accept the Android Auto messages on both the phone and the car's screen.",
+         "detail": "The first setup only works with the car standing still."},
+        {"id": "s3", "type": "ask", "text": "Do you connect with a cable or wirelessly?",
+         "options": [{"label": "With a cable", "next": "w1"}, {"label": "Wirelessly", "next": "x1"}]},
+        {"id": "w1", "type": "check", "text": "Use the data USB port (often marked with a phone symbol) and a short original data cable."},
+        {"id": "w2", "type": "check", "text": "Update Android Auto, Google Maps and Google Play services from the Play Store.", "next": "a1"},
+        {"id": "x1", "type": "check", "text": "Switch on both Bluetooth and Wi-Fi on the phone, and switch off its mobile hotspot.",
+         "detail": "Wireless Android Auto uses Bluetooth to start and Wi-Fi to carry the picture."},
+        {"id": "x2", "type": "check", "text": "Forget the car in Bluetooth and in Android Auto's settings, then set it up again; some cars need one connection with a cable first.", "next": "a1"},
+        {"id": "a1", "type": "check", "text": "In Android Auto's settings, remove the car from 'Previously connected cars' and connect again."},
+        {"id": "a2", "type": "check", "text": "Restart the phone, and restart the car's system: car off, locked, wait 5 minutes."}
+      ],
+      "escalate": {"text": "The car's media system may need a software update for your phone.",
+                   "tell_service": ["Phone model, Android version and Android Auto version", "Cable or wireless, and which cable",
+                                    "Any message on the car's screen or the phone"]}
+    },
+    {
+      "id": "carplay-start",
+      "category": "projection",
+      "title": "Apple CarPlay doesn't start",
+      "summary": "The iPhone is plugged in or nearby, but CarPlay doesn't appear on the car's screen.",
+      "symptoms": ["carplay not working", "apple carplay not connecting", "carplay not showing on the screen",
+                   "iphone not connecting to the car screen", "wireless carplay not connecting", "carplay nahi chal raha"],
+      "keywords": ["carplay", "apple", "iphone", "siri", "wireless", "cable", "lightning"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "On the iPhone, open Settings > General > CarPlay and check your car is listed and allowed."},
+        {"id": "s2", "type": "check", "text": "Check that Screen Time doesn't block CarPlay (Settings > Screen Time > Content & Privacy Restrictions > Allowed Apps) and that Siri is on.",
+         "detail": "CarPlay needs Siri switched on."},
+        {"id": "s3", "type": "ask", "text": "Do you connect with a cable or wirelessly?",
+         "options": [{"label": "With a cable", "next": "w1"}, {"label": "Wirelessly", "next": "x1"}]},
+        {"id": "w1", "type": "check", "text": "Use the car's data USB port and an Apple or certified cable; unlock the iPhone and tap Allow or Trust.", "next": "a1"},
+        {"id": "x1", "type": "check", "text": "Switch on Bluetooth and Wi-Fi, switch off Personal Hotspot and airplane mode, then in Settings > General > CarPlay choose your car > Forget This Car and set it up again."},
+        {"id": "a1", "type": "check", "text": "Restart the iPhone, and restart the car's system: car off, locked, wait 5 minutes."}
+      ],
+      "escalate": {"text": "The car's media system may need a software update.",
+                   "tell_service": ["iPhone model and iOS version", "Cable or wireless", "Any message on the car's screen"]}
+    },
+    {
+      "id": "projection-drops",
+      "category": "projection",
+      "title": "Android Auto or CarPlay keeps disconnecting",
+      "summary": "The phone's apps disappear from the screen while driving and come back, or the connection is lost.",
+      "symptoms": ["android auto keeps disconnecting", "carplay disconnects while driving", "screen goes back to the car menu",
+                   "android auto connection lost", "carplay drops", "android auto baar baar band ho jata hai"],
+      "keywords": ["disconnect", "disconnects", "drops", "lost", "keeps", "android", "auto", "carplay", "cable"],
+      "safety": "normal",
+      "steps": [
+        {"id": "s1", "type": "check", "text": "Replace the cable with a short (under 1 metre) data cable, without adapters or extension cables.",
+         "detail": "A worn or long cable is the most common cause."},
+        {"id": "s2", "type": "check", "text": "Keep the phone out of direct sun and off a wireless charger while it's connected.",
+         "detail": "Phones drop the connection when they get too hot."},
+        {"id": "s3", "type": "check", "text": "Look for lint in the phone's port and check the cable sits firmly."},
+        {"id": "s4", "type": "check", "text": "Switch off battery saver, and update the phone and Android Auto or iOS."},
+        {"id": "s5", "type": "check", "text": "For wireless: keep the phone near the screen, and make sure no other phone is connected to the car."}
+      ],
+      "escalate": {"text": "The car's USB connection or media system may need a check.",
+                   "tell_service": ["How often it drops", "Cable or wireless, and which phone", "Whether it happens with another phone or cable"]}
+    }
+  ]
+}

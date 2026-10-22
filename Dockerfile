@@ -11,6 +11,11 @@ COPY app ./app
 COPY ui ./ui
 COPY data ./data
 COPY scripts ./scripts
+COPY firmware ./firmware
+# Phase 4: compile the AEB C code and its test mutants for software-in-the-loop runs, then drop the compiler
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
+    && python scripts/sil_run.py build --mutants \
+    && apt-get purge -y --auto-remove gcc libc6-dev && rm -rf /var/lib/apt/lists/*
 # run as an unprivileged user; only /data is writable
 RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin app \
     && mkdir -p /data && chown app:app /data

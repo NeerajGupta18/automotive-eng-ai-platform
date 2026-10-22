@@ -1,0 +1,49 @@
+# Default deny, then: ingress controller -> UI, UI -> API, DNS and HTTPS egress for the API (LLM gateway,
+# Jira, webhook receivers). Adjust the namespace label of your ingress controller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: automotive-eng-ai
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ui-from-ingress
+  namespace: automotive-eng-ai
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: aeai-ui}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ingress-nginx}
+      ports: [{port: 8501, protocol: TCP}]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: aeai-api}
+      ports: [{port: 8000, protocol: TCP}]
+    - ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-from-ui
+  namespace: automotive-eng-ai
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: aeai-api}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: aeai-ui}
+      ports: [{port: 8000, protocol: TCP}]
+  egress:
+    - ports: [{port: 53, protocol: UDP}, {port: 53, protocol: TCP}]
+    - ports: [{port: 443, protocol: TCP}, {port: 80, protocol: TCP}]

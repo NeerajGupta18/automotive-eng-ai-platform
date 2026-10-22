@@ -11,6 +11,60 @@ one module per case study:
 | 3 | **Cybersecurity TARA** | ✅ Implemented (Stage 2) |
 | 4 | **UDS diagnostics & test generation** | ✅ Implemented (Stage 3) |
 | 5 | **Secure code debugging & review** | ✅ Implemented (Stage 4) |
+| 6 | **Vulnerability monitoring & OTA update security** | ✅ Implemented (Phase 2) |
+| 7 | **ADAS virtual validation (AEB, model- and software-in-the-loop)** | ✅ Implemented (Phase 4) |
+| 8 | **Release readiness, engineering agent and enterprise integration** | ✅ Implemented (Phase 5) |
+| 9 | **Field-issue investigator: agentic root-cause analysis of customer complaints** | ✅ Implemented (Phase 6, own case study) |
+
+**Phase 1 – measured AI quality** (new): hybrid BM25 + vector retrieval, off-topic refusal before
+the LLM is called, duplicate-version handling, citation support checks, LLM fallback, and a
+79-question evaluation that runs locally, on the *AI Quality* page and as a CI gate.
+On the offline setup, overall accuracy went from **46.8% to 79.7%** and off-topic questions refused
+from **0% to 100%** (details: [docs/PHASE1_AI_QUALITY.md](docs/PHASE1_AI_QUALITY.md),
+[eval/results/REPORT.md](eval/results/REPORT.md)). Live demo deployment:
+[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
+
+**Phase 2 – OTA update security and R155/R156 evidence** (new): CycloneDX SBOMs per ECU matched
+against an OSV advisory feed (CVSS computed from the vector, VEX triage with four-eyes, exploitable
+findings flag the ECU's TARA threats, CycloneDX VEX export); signed OTA packages (ECDSA P-256)
+verified by 12 checks including anti-rollback, replay, RXSWIN and SBOM delta, released only by a
+second person, with an attack self-test that catches **17/17** tampering scenarios; and a CSMS/SUMS
+evidence pack organised by the UN R155 Annex 5 threat groups. Details:
+[docs/PHASE2_OTA_CYBERSECURITY.md](docs/PHASE2_OTA_CYBERSECURITY.md).
+
+**Phase 4 – ADAS virtual validation with software-in-the-loop** (new): an Autonomous Emergency
+Braking function as a Python reference model **and** production-style C code (0 findings from the
+platform's own analyzer), tested in a closed-loop simulation on 52 Euro NCAP-style and SOTIF
+scenarios against 15 machine-checkable requirements. The C code is compiled and run in the loop,
+compared **back-to-back** with the model (0 differences over 50,000+ time steps) and stress-tested
+with **mutation testing** (7 of 11 injected defects caught by the requirements, all survivors caught
+by back-to-back). Boundary-value analysis and plain-language descriptions propose new scenarios for a
+reviewer; scenarios export to **ASAM OpenSCENARIO 1.1**; a release needs a second person and fresh
+SIL evidence, and changing a requirement makes the release suspect. Details:
+[docs/PHASE4_ADAS_VIRTUAL_VALIDATION.md](docs/PHASE4_ADAS_VIRTUAL_VALIDATION.md).
+
+**Phase 5 – agentic engineering workflows and enterprise integration** (new): one **GO / NO-GO release
+readiness** view across all disciplines (eleven checks; twelve with Phase 6), with an owner and an action for every blocker (also as a CI
+gate); an **engineering agent** that turns a goal into a plan (rule playbooks, or an LLM choosing from the same
+tool registry), runs read steps on its own and **stops for a person before every write**, which then runs under
+that person's name so four-eyes still holds; it has no tool that can approve, release or delete, and resumes
+waiting runs by deterministic replay. Integration: **signed webhooks** fed from the tamper-evident audit log
+(SSRF-protected, retries, dead letter), **Jira** tickets, **ReqIF 1.2** exchange with OEM/supplier tools
+(XSD-valid export; import with change detection that flags the platform items a customer change affects), an
+**MCP server** so AI assistants can use the platform with a user's own permissions, and hardened **Kubernetes**
+manifests. Details: [docs/PHASE5_AGENTIC_INTEGRATION.md](docs/PHASE5_AGENTIC_INTEGRATION.md).
+
+**Phase 6 – field-issue investigator** (new, own case study): when customers complain that the car *braked for no
+reason*, the agent investigates on its own as soon as the complaint arrives. It groups complaints by symptom and software
+build, **replays each vehicle recording bit-exactly on the field build's compiled C code**, rebuilds the situation as a
+closed-loop scenario (retrying variations until it matches), and finds the root cause by differential replay: a coding
+defect (code vs model), a calibration regression (and which parameter), a radar phantom, a correct intervention (without
+AEB the car would have crashed), a system limitation or missing data. It then checks why the problem escaped, searches a
+fix that passes every complaint, a margin case and the whole regression library (or a rollback build), proposes the
+hazard rating and the corrective actions, and **stops for a person twice** (safety manager, actions); scenario approval,
+the verification campaign's release and the closure stay four-eyes. Output: tickets, regression scenarios, a verified
+calibration and a complete **8D report**. Measured on 27 labelled cases (synthetic): root cause 27/27, no false defects
+(CI gate). Details: [docs/PHASE6_FIELD_ISSUE_INVESTIGATOR.md](docs/PHASE6_FIELD_ISSUE_INVESTIGATOR.md).
 
 > AI output is advisory. Nothing is used for design approval, compliance or release
 > without qualified human review. The platform enforces this in the workflow (see *Design decisions*).
@@ -149,13 +203,34 @@ app/
   modules/tara/        rules (risk) · architecture · service
   modules/uds/         spec · engine (oracle) · testgen · simulator · harness_template · export · service   
   modules/codereview/  analyzer (28 rules) · logs · fixes · sarif · service
-  api/                 main · hld routes · hara · tara · uds · codereview · admin · trace · security (guard/RBAC) · deps
+  modules/vuln/        sbom (CycloneDX) · feed (OSV) · versions · cvss · service (findings, VEX, TARA link)
+  modules/ota/         package (format, ECDSA P-256) · checks (P01-P12) · selftest (17 attacks) · service
+  modules/compliance/  r155 (Annex 5 groups, mapping) · service (evidence pack)
+  modules/adas/        model (AEB reference) · sim (closed loop) · scenarios (catalog, OpenSCENARIO) · requirements
+                       authoring (validation, boundary values, plain language) · sil (C build + ctypes) · campaign
+                       (verdicts, back-to-back, mutation testing) · report · service (workflow, release)
+  modules/readiness/   release readiness (GO / NO-GO across all modules, owners and actions)
+  modules/agent/       tools (allow-listed registry) · playbooks (plans, router, LLM planner) · service (checkpoints, replay, audit)
+  modules/integration/ webhooks (events, SSRF policy, signing) · jira · reqif (1.2 export/import) · service (dispatch, tickets, change impact)
+  modules/field/       logs (recordings) · builds · investigate (replay, reconstruction, diagnosis, escape, fix search, hazard) · triage · service · report (8D)
+firmware/aeb/          aeb_ctrl.c / aeb_ctrl.h: the AEB function in C99 (software under test)
+deploy/k8s/            Kubernetes manifests (kustomize; hardened; validated with kubeconform)
+  api/                 main · hld routes · hara · tara · uds · codereview · vuln · ota · compliance · adas · agent · integration · admin · trace · security (guard/RBAC) · deps
 ui/streamlit_app.py    HLD page (main)
 ui/pages/              2_Functional_Safety_HARA.py · 3_Cybersecurity_TARA.py · 4_UDS_Diagnostics.py · 5_Secure_Code_Review.py · 6_Traceability.py · 7_Administration.py
+                       8_AI_Quality.py · 9_Vulnerabilities_and_OTA.py · 10_ADAS_Virtual_Validation.py
+                       11_Release_Readiness_and_Agent.py · 12_Integrations.py · 13_Field_Issues.py
 scripts/               manage.py (users, backup/restore, reindex, verify-audit) · review_gate.py (CI) · seed_demo.py
+                       run_eval.py (RAG evaluation) · ota_tool.py (keys, signed packages) · sil_run.py (SIL campaigns, CI gate)
+                       mcp_server.py (MCP for AI assistants) · release_gate.py (GO / NO-GO gate for external pipelines)
+                       make_field_data.py (synthetic field recordings) · eval_field_agent.py (field agent evaluation, CI gate)
 data/library/          synthetic hazard and threat libraries (versioned, owner + review date)
-data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json), C code samples with planted defects + tool logs
-tests/                 313 tests; every store test runs on both NumPy and ChromaDB
+data/samples/          synthetic BCM HLDs (v1 with planted defects, v2 with fixes), TARA system/comm matrix, UDS spec (md + golden json), C code samples with planted defects + tool logs,
+                       ECU SBOMs and OTA packages (Phase 2), AEB requirement set (Phase 4), OEM ReqIF v1/v2 (Phase 5), field builds, complaints and recordings (Phase 6, synthetic)
+eval/field/            27 labelled field cases (Phase 6); results in eval/field/results/FIELD_AGENT_REPORT.md
+tests/                 541 tests; every store test runs on both NumPy and ChromaDB
+eval/                  labelled question set, extra evaluation documents, saved results + REPORT.md
+render.yaml            Render Blueprint (one free web service; scripts/render_start.sh)
 ```
 
 ## Quick start
@@ -163,10 +238,10 @@ tests/                 313 tests; every store test runs on both NumPy and Chroma
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-cp .env.example .env                                    # defaults run fully offline
+cp .env.example .env                                    # optional; defaults run fully offline (.env is read at start)
 
 uvicorn app.api.main:app --port 8000                    # terminal 1
-python scripts/seed_demo.py                             # optional: loads sample HLDs
+python scripts/seed_demo.py                             # optional: loads the demo project for every module
 streamlit run ui/streamlit_app.py                       # terminal 2  -> http://localhost:8501
 ```
 
@@ -177,7 +252,15 @@ API docs: http://localhost:8000/docs · Tests: `python -m pytest -q`
 ```bash
 cp .env.example .env
 docker compose up --build            # UI on :8501, API on :8000
-docker compose --profile llm up      # also starts Ollama (then: docker compose exec ollama ollama pull llama3.1:8b)
+docker compose --profile llm up      # also starts Ollama (then: docker compose exec ollama ollama pull llama3.2:3b)
+```
+
+### Kubernetes, AI assistants and CI (Phase 5)
+
+```bash
+kubectl apply -k deploy/k8s          # after setting the image and the secret: see deploy/k8s/README.md
+python scripts/mcp_server.py         # MCP server for AI assistants (AEAI_API_URL, AEAI_PROJECT, AEAI_API_TOKEN)
+python scripts/release_gate.py --project bcm-demo --api http://localhost:8000   # exit 1 on NO-GO
 ```
 
 ## Using a real LLM and real embeddings
@@ -187,8 +270,8 @@ For real answers set in `.env`:
 
 ```bash
 # Local model with Ollama
-ollama pull llama3.1:8b
-LLM_BACKEND=ollama  OLLAMA_MODEL=llama3.1:8b
+ollama pull llama3.2:3b                 # 16 GB RAM or more: llama3.1:8b
+LLM_BACKEND=ollama  OLLAMA_MODEL=llama3.2:3b
 
 # or any OpenAI-compatible private server (vLLM, LM Studio, llama.cpp, gateway)
 LLM_BACKEND=openai_compat  OPENAI_BASE_URL=http://host:8001/v1  OPENAI_MODEL=...
@@ -224,9 +307,9 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 
 ## Testing
 
-`python -m pytest -q` runs 313 tests. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage. Stage 4: every rule with a positive case and a false-positive guard, masking of comments/strings, fuzzing and performance, fingerprint stability, cppcheck/SARIF/text parsers and XML-entity rejection, verified fixes (including a patch that must be rejected), findings lifecycle (fixed/reopened/line shifts/stale logs), four-eyes triage, LLM guardrails (fabricated evidence dropped, redaction, external-backend gate), HLD/HARA enrichment, quality gate, SARIF, CLI exit codes. Stage 5: route classification table and an OpenAPI-wide deny-by-default check, token lifecycle (rotate, disable, expire, only a hash stored), the role matrix, non-member 404s, token-bound four-eyes (spoofed `X-User` fails), failed-login lockout and rate limits, streamed-body size limit, headers and generic 500s, audit-chain tamper/deletion/injection detection and concurrency, low-cardinality metrics, log hygiene (no tokens), migration of a Stage-4 database, backup/restore round trip and hostile archives (traversal, symlink, tampering), reindex, readiness, the management CLI, and cross-module trace and re-review worklist.
+`python -m pytest -q` runs 541 tests. Phase 6: recording format and hostile inputs, round trip and bit-exact replay, phantom vs late real object, complaint text rules (including mixed Hindi-English) and a validated LLM reading, the build registry, every root-cause class (coding defects on the compiled C code, the responsible calibration parameter, wrong software version detection, a justified change not reverted), latency estimation and retries, fix search with margin and regression, no unsafe sensor mitigation, rollback containment, the hazard proposal, the agent's two checkpoints, four-eyes from scenario approval to closure, automatic re-investigation, readiness RR12, RBAC with enforced tokens, the MCP tool and the evaluation gate. Phase 5: readiness (empty project, ADAS release and change, tampered audit log), goal routing, a tool registry without approval tools, runs that pause, survive a restart and resume under the confirming person's name, four-eyes on agent-produced work, the step budget, an LLM planner with a scripted model (blocked tools, prompt injection inside data, replay without re-asking), webhook SSRF policy, signatures, live delivery with retries and dead letter, dry run, Jira against a local fake, ReqIF against the OMG XSD and an independent parser with change detection and hostile inputs, the MCP server over raw JSON-RPC and with the official SDK, the release-gate CLI and RBAC with enforced tokens. Phase 4: the AEB model's behaviours and formulas against hand calculations, deterministic simulation, the Euro NCAP grid values, every requirement check, plain-language parsing, scenario validation, boundary-value analysis, LLM guardrails, OpenSCENARIO/OpenDRIVE schema validity, the firmware's code-review gate and strict compile, SIL build caching and layout check, back-to-back over every time step, the exact mutant kill set, calibration what-ifs, CLI exit codes, and the release workflow with four-eyes, stale evidence and change impact. Phase 2: version ordering and OSV ranges, CVSS against published scores, SBOM/feed validation, exact ground-truth matching with boundary cases, triage with four-eyes and VEX, automatic resolution, every OTA attack, unsafe archives, key and release rules, revocation, safety-impact gating, R155 mapping, evidence pack, API, CLI and isolated PDF parsing. Phase 1: tokenizer and BM25 ranking, coverage gate (off-topic refused, in-domain answered), duplicate-version collapse, citation support, semantic rescue rules, LLM outage fallback, hosted-LLM-without-key fallback, `.env` precedence, reranker, settings validation, question-set integrity and an evaluation smoke run. Stage 1:  chunking, both vector backends, extraction (MD and PDF), every consistency rule on planted defects, impact analysis, revision diff, API flow (upload validation, Q&A, refusal, draft gating, project isolation, review workflow, audit, delete). Stage 2: ASIL corner cases, requirement-quality rules, four-eyes enforcement, approval gates, idempotent generation, change-impact suspect propagation, allocation checks against the linked HLD, HARA↔TARA safety-link consistency, coverage checklist and N/A flow, stale-library detection, CSV/HLD imports, reports, history and project isolation. Stage 3: spec normalisation and extraction (golden file), spec consistency rules, oracle behaviour per service (check order, security flow, S3, ranges, suppress bit), deterministic generation with oracle-consistency check, defect detection for every injected fault, exported bundle executed under pytest, spec-change suspect propagation, requirement links across modules, coverage and NRC coverage. Stage 4: every rule with a positive case and a false-positive guard, masking of comments/strings, fuzzing and performance, fingerprint stability, cppcheck/SARIF/text parsers and XML-entity rejection, verified fixes (including a patch that must be rejected), findings lifecycle (fixed/reopened/line shifts/stale logs), four-eyes triage, LLM guardrails (fabricated evidence dropped, redaction, external-backend gate), HLD/HARA enrichment, quality gate, SARIF, CLI exit codes. Stage 5: route classification table and an OpenAPI-wide deny-by-default check, token lifecycle (rotate, disable, expire, only a hash stored), the role matrix, non-member 404s, token-bound four-eyes (spoofed `X-User` fails), failed-login lockout and rate limits, streamed-body size limit, headers and generic 500s, audit-chain tamper/deletion/injection detection and concurrency, low-cardinality metrics, log hygiene (no tokens), migration of a Stage-4 database, backup/restore round trip and hostile archives (traversal, symlink, tampering), reindex, readiness, the management CLI, and cross-module trace and re-review worklist.
 
-**Verified in development:** the full automated suite, plus the Streamlit UI driven headlessly (Streamlit `AppTest`) against a live API.
+**Verified in development:** the full automated suite, plus the Streamlit UI driven headlessly (Streamlit `AppTest` and a headless browser) against a live API. The AEB C code was compiled and run in the loop with GCC 13 on Linux (x86-64); not with an ECU cross-compiler, and not on macOS or Windows here. The MCP server was exercised with the official MCP Python SDK client; the ReqIF export was validated against the OMG ReqIF 1.2 XSD; the Kubernetes manifests were validated with kubeconform (strict) and a kustomize build.
 **Not verified here:** a real LLM (Ollama/vLLM), sentence-transformers embeddings, and the Docker build. Run these once on your machine before a demo.
 
 ## Known limitations
@@ -239,6 +322,9 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - The UDS oracle models ten services (0x10, 0x11, 0x14, 0x19, 0x22, 0x27, 0x2E, 0x31, 0x3E, 0x85). Other services listed in a spec are flagged *unmodelled* and get no tests; memory/transfer services, functional addressing, ISO-TP and CAN timing are out of scope.
 - The code analyzer handles C only (no C++, no preprocessor expansion or macro semantics, single-file analysis, no inter-procedural data flow). Use-after-free and uninitialised-variable checks are intra-block heuristics.
 - Authoring of full safety cases, diagram interpretation and formal FMEA/FTA are out of scope.
+- The field-issue investigator (Phase 6) was measured on synthetic cases generated from the same 1-D simulation it uses: it shows the investigation chain works, not its accuracy on real fleet recordings. Coding-defect builds are the predefined Phase 4 mutants; there is no connection to a real dealer or warranty system.
+- The engineering agent (Phase 5) runs deterministic playbooks by default; the LLM planner was tested with a scripted model only. Webhooks, Jira and ReqIF were tested against local receivers and synthetic files, not against a real Jira or DOORS/Polarion; the Kubernetes manifests are schema-valid but were not applied to a cluster here.
+- ADAS validation (Phase 4) uses a one-dimensional longitudinal simulation with simplified brake and sensor models; it is a regression and comparison harness for control logic, not a replacement for vehicle-dynamics simulation, HIL or track tests. SIL runs on the development compiler, not the ECU toolchain.
 
 ## Roadmap
 
@@ -247,3 +333,9 @@ With sentence-transformers the refusal threshold defaults to 0.30; tune `MIN_SCO
 - [x] Stage 3: UDS (spec extraction, response oracle, request validation, test generation, simulator with fault injection, Python/CAPL export)
 - [x] Stage 4: Secure code review (28-rule analyzer, tool-log ingestion, findings lifecycle, verified fixes, opt-in LLM review, quality gate, SARIF)
 - [x] Stage 5: RBAC and API-token authentication, tamper-evident audit, observability, migrations, backup/restore, cross-module traceability, hardened packaging
+- [x] Phase 1: hybrid retrieval, refusal gate, citation support, LLM fallback, 79-question evaluation with CI quality gate, AI Quality page, Render deployment
+- [x] Phase 2: SBOM vulnerability monitoring with VEX, signed OTA package verification (12 checks, 17/17 attack self-test, four-eyes release), R155/R156 evidence pack
+- [ ] Phase 3: predictive diagnostics copilot (DTC and fleet data, fault-tree guided troubleshooting)
+- [x] Phase 4: ADAS virtual validation: AEB model and C code, Euro NCAP-style and SOTIF scenarios, SIL with back-to-back and mutation testing, OpenSCENARIO export, gated release, CI job
+- [x] Phase 5: release readiness gate, engineering agent with human checkpoints, signed webhooks, Jira, ReqIF exchange, MCP server, Kubernetes manifests
+- [x] Phase 6 (own case study): field-issue investigator — complaint to verified fix with SIL replay, root cause, fix search, hazard rating, 8D

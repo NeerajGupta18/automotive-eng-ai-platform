@@ -36,7 +36,7 @@ services:
       interval: 30s
 
   # Optional local LLM:  docker compose --profile llm up
-  #   then: docker compose exec ollama ollama pull llama3.1:8b   and set LLM_BACKEND=ollama in .env
+  #   then: docker compose exec ollama ollama pull llama3.2:3b   and set LLM_BACKEND=ollama in .env
   ollama:
     image: ollama/ollama
     profiles: ["llm"]

@@ -58,6 +58,32 @@ def project_with_team(s):
     ("GET", "/projects/p/audit", ("approve", "p")), ("GET", "/admin/users", ("global_admin", None)), ("GET", "/metrics", ("global_admin", None)),
     ("GET", "/system/info", ("global_admin", None)), ("GET", "/me", ("authenticated", None)), ("GET", "/tara/rules", ("authenticated", None)),
     ("GET", "/some/unknown/path", ("authenticated", None)), ("PATCH", "/projects/p/anything/new", ("write", "p")),
+    # Phase 2: knowledge feeds and key revocation need a reviewer; uploads and proposals are engineering work
+    ("POST", "/projects/p/vuln/library/load", ("approve", "p")), ("POST", "/projects/p/vuln/library/upload", ("approve", "p")),
+    ("POST", "/projects/p/vuln/sboms", ("write", "p")), ("POST", "/projects/p/vuln/findings/VF-001/triage", ("write", "p")),
+    ("POST", "/projects/p/vuln/findings/VF-001/decision", ("approve", "p")), ("POST", "/projects/p/ota/keys", ("write", "p")),
+    ("POST", "/projects/p/ota/keys/KEY-001/decision", ("approve", "p")), ("POST", "/projects/p/ota/keys/KEY-001/revoke", ("approve", "p")),
+    ("POST", "/projects/p/ota/packages", ("write", "p")), ("POST", "/projects/p/ota/packages/PKG-001/decision", ("approve", "p")),
+    ("GET", "/projects/p/ota/self-test", ("read", "p")), ("GET", "/projects/p/compliance/evidence", ("read", "p")),
+    # Phase 4: running one simulation is a read; proposals and campaigns are engineering work; releases need a reviewer
+    ("POST", "/projects/p/adas/library/load", ("approve", "p")), ("POST", "/projects/p/adas/scenarios/SC-001/run", ("read", "p")),
+    ("POST", "/projects/p/adas/scenarios/propose", ("write", "p")), ("POST", "/projects/p/adas/scenarios/from-text", ("write", "p")),
+    ("POST", "/projects/p/adas/scenarios/SC-001/decision", ("approve", "p")), ("PUT", "/projects/p/adas/requirements/AR-001", ("write", "p")),
+    ("POST", "/projects/p/adas/campaigns", ("write", "p")), ("POST", "/projects/p/adas/campaigns/CMP-001/decision", ("approve", "p")),
+    ("GET", "/projects/p/adas/openscenario.zip", ("read", "p")),
+    # Phase 5: webhooks send project data out (project admins); agent checkpoints and ReqIF imports are engineering work
+    ("POST", "/projects/p/integrations/webhooks", ("admin", "p")), ("POST", "/projects/p/integrations/webhooks/WH-1/ping", ("admin", "p")),
+    ("DELETE", "/projects/p/integrations/webhooks/WH-1", ("admin", "p")), ("GET", "/projects/p/integrations/webhooks", ("read", "p")),
+    ("POST", "/projects/p/integrations/dispatch", ("write", "p")), ("POST", "/projects/p/integrations/tickets", ("write", "p")),
+    ("POST", "/projects/p/integrations/reqif/import", ("write", "p")), ("GET", "/projects/p/integrations/reqif/export", ("read", "p")),
+    ("POST", "/projects/p/integrations/reqif/requirements/XR-001/decision", ("approve", "p")),
+    ("POST", "/projects/p/agent/runs", ("write", "p")), ("POST", "/projects/p/agent/runs/RUN-001/steps/3/confirm", ("write", "p")),
+    ("GET", "/projects/p/readiness", ("read", "p")),
+    # Phase 6: filing complaints, investigating and verifying are engineering work; closing a field issue needs a reviewer
+    ("POST", "/projects/p/field/complaints", ("write", "p")), ("POST", "/projects/p/field/complaints/import", ("write", "p")),
+    ("POST", "/projects/p/field/builds", ("write", "p")), ("POST", "/projects/p/field/issues/FI-001/investigate", ("write", "p")),
+    ("POST", "/projects/p/field/issues/FI-001/verify", ("write", "p")), ("POST", "/projects/p/field/issues/FI-001/decision", ("approve", "p")),
+    ("GET", "/projects/p/field/complaints/FC-001/trace", ("read", "p")), ("GET", "/projects/p/field/issues/FI-001/report", ("read", "p")),
 ])
 def test_classification_table(method, path, expect):
     assert classify(method, path) == expect
@@ -81,7 +107,8 @@ def test_every_route_is_classified_and_new_endpoints_default_to_write(secure):
                 assert perm in ("authenticated", "create_project", "global_admin"), (method, path, perm)
     assert seen > 120, seen
     assert read_posts == {"/projects/{project}/hld/query", "/projects/{project}/uds/specs/{ref}/validate", "/projects/{project}/uds/specs/{ref}/ask",
-                          "/projects/{project}/uds/specs/{ref}/run", "/projects/{project}/uds/specs/{ref}/detection-matrix"}
+                          "/projects/{project}/uds/specs/{ref}/run", "/projects/{project}/uds/specs/{ref}/detection-matrix",
+                          "/projects/{project}/adas/scenarios/{ref}/run"}
 
 
 # ------------------------------------------------------------------ authentication

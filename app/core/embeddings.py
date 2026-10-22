@@ -13,6 +13,7 @@ from app.config import Settings
 
 class Embedder(ABC):
     dim: int
+    semantic: bool = False      # True when similarity reflects meaning, not just shared words
 
     @abstractmethod
     def embed(self, texts: list[str]) -> np.ndarray: ...
@@ -57,6 +58,8 @@ class HashingEmbedder(Embedder):
 
 
 class SentenceTransformerEmbedder(Embedder):
+    semantic = True
+
     def __init__(self, model_name: str):
         from sentence_transformers import SentenceTransformer  # lazy: heavy import
 

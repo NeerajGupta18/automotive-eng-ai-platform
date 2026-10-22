@@ -24,6 +24,9 @@ def _safe(name: str) -> str:
 
 
 class VectorStore(ABC):
+    # bumped on every add/delete so derived indexes (BM25) know when to rebuild
+    generation: int = 0
+
     @abstractmethod
     def add(self, chunks: list[Chunk], embeddings: np.ndarray) -> None: ...
     @abstractmethod
@@ -32,6 +35,9 @@ class VectorStore(ABC):
     def delete(self, where: dict) -> None: ...
     @abstractmethod
     def count(self) -> int: ...
+    @abstractmethod
+    def records(self) -> list[dict]:
+        """All stored chunks as {"id", "text", "meta"} (used to build the keyword index)."""
 
 
 def _match(meta: dict, where: dict | None) -> bool:
@@ -69,6 +75,7 @@ class NumpyStore(VectorStore):
             self._vecs = new if self._vecs.size == 0 else np.vstack([self._vecs, new])
             self._records += [{"id": c.id, "text": c.text, "meta": c.meta} for c in chunks]
             self._save()
+            self.generation += 1
 
     def query(self, embedding, k, where=None):
         with self._lock:
@@ -91,9 +98,14 @@ class NumpyStore(VectorStore):
             self._records = [self._records[i] for i in keep]
             self._vecs = self._vecs[keep] if keep else np.zeros((0, 0), dtype=np.float32)
             self._save()
+            self.generation += 1
 
     def count(self):
         return len(self._records)
+
+    def records(self):
+        with self._lock:
+            return list(self._records)
 
 
 class ChromaStore(VectorStore):
@@ -123,6 +135,7 @@ class ChromaStore(VectorStore):
                 embeddings=np.asarray(embeddings[i:i + 256], dtype=np.float32).tolist(),
                 metadatas=[c.meta for c in part],
             )
+        self.generation += 1
 
     def query(self, embedding, k, where=None):
         if self._col.count() == 0:
@@ -139,9 +152,16 @@ class ChromaStore(VectorStore):
 
     def delete(self, where):
         self._col.delete(where=self._where(where))
+        self.generation += 1
 
     def count(self):
         return self._col.count()
+
+    def records(self):
+        if self._col.count() == 0:
+            return []
+        res = self._col.get(include=["documents", "metadatas"])
+        return [{"id": i, "text": d, "meta": m} for i, d, m in zip(res["ids"], res["documents"], res["metadatas"])]
 
 
 def build_store(s: Settings, project: str) -> VectorStore:

@@ -33,6 +33,59 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: review-sarif, path: review.sarif }
 
+  ai-quality-gate:                        # RAG evaluation on 79 labelled questions; fails the build if answer quality regresses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-render.txt
+      - run: >
+          python scripts/run_eval.py --preset offline-hybrid --label ci-offline-hybrid --out eval-ci -q
+          --fail-under "answer_accuracy>=0.75" "hit@5>=0.90" "refusal_offtopic>=1.0" "false_refusal_rate<=0.15" "citation_valid>=0.95"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: rag-eval-report, path: eval-ci/ }
+
+  sil-validation:                         # Phase 4: the AEB C code compiled and tested in the loop against its requirements
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Compile the AEB firmware with strict warnings as errors
+        run: cc -std=c99 -O2 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wdouble-promotion -Werror -c firmware/aeb/aeb_ctrl.c -o /tmp/aeb_ctrl.o
+      - name: Code review gate on the firmware (any finding fails)
+        run: python scripts/review_gate.py firmware/aeb --fail-on info
+      - name: SIL campaign (requirements, back-to-back against the model, mutation testing)
+        run: python scripts/sil_run.py campaign --target sil --mutation --min-mutation-score 0.6 --out sil-report
+      - name: OpenSCENARIO / OpenDRIVE export valid against the ASAM schemas
+        run: pip install "scenariogeneration==0.16.7" && python scripts/sil_run.py xosc --out sil-report/openscenario --validate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: aeb-validation-report, path: sil-report/ }
+
+  field-agent-quality:                    # Phase 6: the field-issue agent on 27 labelled cases; fails below the thresholds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-render.txt
+      - run: python scripts/eval_field_agent.py --check --out field-eval -q
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: field-agent-report, path: field-eval/ }
+
+  deploy-manifests:                       # Phase 5: Kubernetes manifests valid against the API schemas (strict), as written and as rendered
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar -xz kubeconform
+      - run: ./kubeconform -strict -summary -kubernetes-version 1.30.0 -ignore-filename-pattern kustomization.yaml deploy/k8s/
+      - run: kubectl kustomize deploy/k8s | ./kubeconform -strict -summary -kubernetes-version 1.30.0 -
+
   docker:                                 # build only (not verified in the development sandbox)
     runs-on: ubuntu-latest
     steps:

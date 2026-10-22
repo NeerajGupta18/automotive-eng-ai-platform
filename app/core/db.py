@@ -62,9 +62,34 @@ def _m_auth(conn) -> None:
     """)
 
 
+def _m_integration(conn) -> None:
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS webhooks(
+        id TEXT PRIMARY KEY, project TEXT NOT NULL, url TEXT NOT NULL, events TEXT NOT NULL, secret TEXT NOT NULL,
+        description TEXT, active INTEGER NOT NULL DEFAULT 1, cursor INTEGER NOT NULL DEFAULT 0,
+        created_by TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS deliveries(
+        id INTEGER PRIMARY KEY AUTOINCREMENT, webhook_id TEXT NOT NULL, project TEXT NOT NULL, audit_id INTEGER,
+        event TEXT NOT NULL, body TEXT NOT NULL, status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at TEXT, last_attempt_at TEXT, last_status INTEGER, last_error TEXT, signature TEXT,
+        created_at TEXT NOT NULL, UNIQUE(webhook_id, audit_id));
+    CREATE INDEX IF NOT EXISTS ix_deliveries_due ON deliveries(status, next_attempt_at);
+    """)
+
+
+def _m_field(conn) -> None:
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS field_logs(
+        id INTEGER PRIMARY KEY AUTOINCREMENT, project TEXT NOT NULL, sha256 TEXT NOT NULL, filename TEXT, content TEXT NOT NULL,
+        rows INTEGER, created_by TEXT, created_at TEXT NOT NULL, UNIQUE(project, sha256));
+    """)
+
+
 MIGRATIONS = [(1, "baseline (stages 1-4)", lambda conn: None),
               (2, "hash-chained audit log", _m_audit_chain),
-              (3, "users and project memberships", _m_auth)]
+              (3, "users and project memberships", _m_auth),
+              (4, "integration hub: webhooks and deliveries (Phase 5)", _m_integration),
+              (5, "field issues: vehicle recordings (Phase 6)", _m_field)]
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

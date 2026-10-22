@@ -8,3 +8,4 @@ pandas>=2.0
 pymupdf>=1.24
 chromadb>=0.5
 streamlit>=1.50
+cryptography>=42

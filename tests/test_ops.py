@@ -54,9 +54,10 @@ def test_stage4_database_is_upgraded_in_place(tmp_path):
     p = tmp_path / "old.db"
     stage4_database(p)
     db = Database(p)
-    assert db.migrations_applied == [1, 2, 3] and db._q("SELECT max(version) AS v FROM schema_version")[0]["v"] == SCHEMA_VERSION
+    assert db.migrations_applied == [1, 2, 3, 4, 5] and db._q("SELECT max(version) AS v FROM schema_version")[0]["v"] == SCHEMA_VERSION
     assert db.project_exists("legacy") and db.rec_get("legacy", "H-001")
-    assert {r["name"] for r in db._q("SELECT name FROM sqlite_master WHERE type='table'")} >= {"users", "memberships", "schema_version"}
+    assert {r["name"] for r in db._q("SELECT name FROM sqlite_master WHERE type='table'")} >= {"users", "memberships", "schema_version", "webhooks", "deliveries",
+                                                                                          "field_logs"}
     v = db.verify_audit()
     assert v["ok"] and v["legacy_rows"] == 4 and v["chained_rows"] == 0 and v["head"] is None          # legacy rows cannot be verified, and are reported as such
     db.audit("new-user", "new.action", "legacy")
@@ -66,7 +67,7 @@ def test_stage4_database_is_upgraded_in_place(tmp_path):
     db._q("INSERT INTO audit(ts,actor,action) VALUES('t','forger','fake.entry')")                         # an unchained row after the chain started
     assert not db.verify_audit()["ok"]
     again = Database(p)
-    assert again.migrations_applied == [] and len(again._q("SELECT * FROM schema_version")) == 3           # idempotent
+    assert again.migrations_applied == [] and len(again._q("SELECT * FROM schema_version")) == SCHEMA_VERSION           # idempotent
 
 
 # ------------------------------------------------------------------ backup and restore

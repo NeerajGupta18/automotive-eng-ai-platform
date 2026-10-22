@@ -42,7 +42,7 @@ else:
     st.success("Nothing is waiting for re-review.")
 
 st.subheader("Impact of a change")
-ref = st.text_input("Reference (e.g. HE-001, FSR-002, TS-010, TC-005, F-012)", key="trace_ref")
+ref = st.text_input("Reference (e.g. HE-001, FSR-002, TS-010, TC-005, F-012, AR-005)", key="trace_ref")
 if ref:
     n = api("GET", f"{T}/nodes/{ref}")
     if n:
@@ -55,4 +55,4 @@ if ref:
         r = raw_get(f"{T}/graph", around=ref)
         if r is not None and "->" in r.text:
             st.graphviz_chart(r.text, width="stretch")
-            st.caption("Orange outline = suspect. Colours: red HARA · blue TARA · green UDS tests · amber code review.")
+            st.caption("Orange outline = suspect. Colours: red HARA · blue TARA · green UDS tests · amber code review · purple ADAS validation.")

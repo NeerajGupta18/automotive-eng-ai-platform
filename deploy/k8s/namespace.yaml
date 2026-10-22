@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: automotive-eng-ai
+  labels:
+    app.kubernetes.io/part-of: automotive-eng-ai
+    pod-security.kubernetes.io/enforce: restricted

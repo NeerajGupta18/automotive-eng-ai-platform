@@ -1,0 +1,16 @@
+# kubectl apply -k deploy/k8s   (after creating the aeai-secrets secret and pushing the image)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: automotive-eng-ai
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - pvc.yaml
+  - api.yaml
+  - ui.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+images:
+  - name: automotive-eng-ai
+    newName: ghcr.io/YOUR_GITHUB_USER/automotive-eng-ai
+    newTag: "1.0.0"

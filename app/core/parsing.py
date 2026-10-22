@@ -87,9 +87,50 @@ def parse_text(path: Path) -> list[Page]:
     return [Page(i, t.strip()) for i, t in enumerate(raw.split("\f"), start=1)]
 
 
+def _pdf_child(path: str, conn) -> None:
+    try:
+        conn.send(("ok", [(p.number, p.text) for p in parse_pdf(Path(path))]))
+    except Exception as e:                                   # noqa: BLE001 - reported to the parent
+        conn.send(("err", f"{type(e).__name__}: {e}"))
+    finally:
+        conn.close()
+
+
+def parse_pdf_isolated(path: Path, timeout: float = 120.0) -> list[Page]:
+    """Parse a PDF in a short-lived child process. PyMuPDF's memory (about 200 MB after table detection)
+    is returned to the OS when the child exits, and a malformed PDF that hangs or crashes the parser
+    cannot take the API process down. Used on small cloud instances (PDF_PARSE_ISOLATION=1)."""
+    import multiprocessing as mp
+
+    ctx = mp.get_context("spawn")
+    parent, child = ctx.Pipe(duplex=False)
+    proc = ctx.Process(target=_pdf_child, args=(str(path), child), daemon=True)
+    proc.start()
+    child.close()
+    try:
+        if not parent.poll(timeout):
+            raise ValueError(f"PDF parsing did not finish within {timeout:g} s")
+        status, data = parent.recv()
+    except EOFError as e:
+        raise ValueError("PDF parser process crashed") from e
+    finally:
+        parent.close()
+        proc.join(2)
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(2)
+    if status != "ok":
+        raise ValueError(data)
+    return [Page(n, t) for n, t in data]
+
+
 def parse_document(path: Path) -> list[Page]:
+    import os
+
     ext = path.suffix.lower()
     if ext == ".pdf":
+        if os.getenv("PDF_PARSE_ISOLATION", "0") == "1":
+            return parse_pdf_isolated(path, float(os.getenv("PDF_PARSE_TIMEOUT_S", "120")))
         return parse_pdf(path)
     if ext in (".md", ".txt"):
         return parse_text(path)

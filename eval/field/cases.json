@@ -1,0 +1,517 @@
+{
+  "note": "Labelled synthetic field cases for the field-issue agent. The cause of each case is known because the recording was generated from it.",
+  "builds": "data/samples/field/builds.json",
+  "cases": [
+    {
+      "id": "E01",
+      "build": "2.4.0",
+      "text": "Braked hard under a flyover at 80 km/h, nothing ahead.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 80.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.12,
+        "ghost_distance_m": 24.0,
+        "duration_s": 8.0,
+        "seed": 21
+      },
+      "log": "logs/E01.csv"
+    },
+    {
+      "id": "E02",
+      "build": "2.4.0",
+      "text": "Automatic braking for no reason at 60 km/h on a bridge.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 60.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.08,
+        "ghost_distance_m": 18.0,
+        "duration_s": 8.0,
+        "seed": 22
+      },
+      "log": "logs/E02.csv"
+    },
+    {
+      "id": "E03",
+      "build": "2.4.0",
+      "text": "Car jerked and braked by itself at 85 kmph, empty road.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 85.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.1,
+        "ghost_distance_m": 28.0,
+        "duration_s": 8.0,
+        "seed": 23
+      },
+      "log": "logs/E03.csv"
+    },
+    {
+      "id": "E04",
+      "build": "2.4.0",
+      "text": "Sudden brake activation over a metal plate at 55 km/h.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 55.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.13,
+        "ghost_distance_m": 15.0,
+        "duration_s": 8.0,
+        "seed": 24
+      },
+      "log": "logs/E04.csv"
+    },
+    {
+      "id": "E05",
+      "build": "2.4.0",
+      "text": "The collision warning beeps for no reason on the highway at 70 km/h.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "false_warning",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 70.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.1,
+        "ghost_distance_m": 40.0,
+        "duration_s": 8.0,
+        "seed": 25
+      },
+      "log": "logs/E05.csv"
+    },
+    {
+      "id": "E06",
+      "build": "2.4.0",
+      "text": "Phantom braking near the toll gantry at 75 km/h.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 75.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.09,
+        "ghost_distance_m": 22.0,
+        "duration_s": 8.0,
+        "seed": 26,
+        "latency_s": 0.1
+      },
+      "log": "logs/E06.csv"
+    },
+    {
+      "id": "E07",
+      "build": "2.4.0",
+      "text": "Gaadi ne achanak brake maar diya flyover ke neeche, speed 50 thi.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "confirm_cycles"
+      },
+      "scenario": {
+        "ego_kmh": 50.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.11,
+        "ghost_distance_m": 16.0,
+        "duration_s": 8.0,
+        "seed": 27
+      },
+      "log": "logs/E07.csv"
+    },
+    {
+      "id": "S01",
+      "build": "2.3.0",
+      "text": "Hard braking under an overhead sign gantry at 80 km/h, no car ahead.",
+      "expected": {
+        "class": "sensor_false_target",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 80.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.6,
+        "ghost_distance_m": 45.0,
+        "duration_s": 8.0,
+        "seed": 31
+      },
+      "log": "logs/S01.csv"
+    },
+    {
+      "id": "S02",
+      "build": "2.3.0",
+      "text": "Brakes slammed at a bridge at 70 km/h with nothing in front.",
+      "expected": {
+        "class": "sensor_false_target",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 70.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.8,
+        "ghost_distance_m": 40.0,
+        "duration_s": 8.0,
+        "seed": 32
+      },
+      "log": "logs/S02.csv"
+    },
+    {
+      "id": "S03",
+      "build": "2.4.0",
+      "text": "Emergency braking at 80 km/h under a railway overbridge, road was empty.",
+      "expected": {
+        "class": "sensor_false_target",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 80.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 1.0,
+        "ghost_distance_m": 50.0,
+        "duration_s": 8.0,
+        "seed": 33
+      },
+      "log": "logs/S03.csv"
+    },
+    {
+      "id": "S04",
+      "build": "2.3.0",
+      "text": "Car braked by itself at 60 km/h before a flyover, nothing there.",
+      "expected": {
+        "class": "sensor_false_target",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 60.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.5,
+        "ghost_distance_m": 30.0,
+        "duration_s": 8.0,
+        "seed": 34
+      },
+      "log": "logs/S04.csv"
+    },
+    {
+      "id": "C01",
+      "build": "2.3.0",
+      "text": "The car slammed the brakes by itself in the toll queue at 45 km/h, I was about to brake.",
+      "expected": {
+        "class": "correct_intervention",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 45.0,
+        "target": "stationary",
+        "gap_m": 40.0,
+        "duration_s": 25.0,
+        "seed": 41,
+        "driver_brake_at_s": 2.95,
+        "driver_brake_mps2": 5.0
+      },
+      "log": "logs/C01.csv"
+    },
+    {
+      "id": "C02",
+      "build": "2.4.0",
+      "text": "AEB braked suddenly at 60 km/h, very uncomfortable.",
+      "expected": {
+        "class": "correct_intervention",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 60.0,
+        "target": "stationary",
+        "gap_m": 70.0,
+        "duration_s": 25.0,
+        "seed": 42
+      },
+      "log": "logs/C02.csv"
+    },
+    {
+      "id": "C03",
+      "build": "2.3.0",
+      "text": "Car braked hard on its own behind another car at 50 km/h.",
+      "expected": {
+        "class": "correct_intervention",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 50.0,
+        "target": "braking",
+        "target_kmh": 50.0,
+        "gap_m": 12.0,
+        "target_decel_mps2": 6.0,
+        "target_brake_at_s": 1.0,
+        "duration_s": 15.0,
+        "seed": 43
+      },
+      "log": "logs/C03.csv"
+    },
+    {
+      "id": "C04",
+      "build": "2.3.0",
+      "text": "Unexpected hard braking when a scooter came into my lane at 50 km/h.",
+      "expected": {
+        "class": "correct_intervention",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 50.0,
+        "target": "moving",
+        "target_kmh": 20.0,
+        "gap_m": 40.0,
+        "sensor_range_m": 15.0,
+        "duration_s": 15.0,
+        "seed": 44
+      },
+      "log": "logs/C04.csv"
+    },
+    {
+      "id": "L01",
+      "build": "2.3.0",
+      "text": "AEB did not brake at 100 km/h on the highway and we hit a stopped truck.",
+      "expected": {
+        "class": "system_limitation",
+        "symptom": "no_braking"
+      },
+      "scenario": {
+        "ego_kmh": 100.0,
+        "target": "stationary",
+        "gap_m": 160.0,
+        "duration_s": 25.0,
+        "seed": 51,
+        "driver_fcw_reaction_s": 2.5,
+        "driver_brake_mps2": 6.0
+      },
+      "log": "logs/L01.csv"
+    },
+    {
+      "id": "L02",
+      "build": "2.3.0",
+      "text": "Emergency braking did not stop the car on the wet road at 60 km/h, we crashed.",
+      "expected": {
+        "class": "system_limitation",
+        "symptom": "no_braking"
+      },
+      "scenario": {
+        "ego_kmh": 60.0,
+        "target": "stationary",
+        "gap_m": 75.0,
+        "duration_s": 25.0,
+        "seed": 52,
+        "mu": 0.45
+      },
+      "log": "logs/L02.csv"
+    },
+    {
+      "id": "L03",
+      "build": "2.3.0",
+      "text": "In heavy fog the car hit a stopped car at 60 km/h, the AEB did not stop us.",
+      "expected": {
+        "class": "system_limitation",
+        "symptom": "no_braking"
+      },
+      "scenario": {
+        "ego_kmh": 60.0,
+        "target": "stationary",
+        "gap_m": 75.0,
+        "duration_s": 25.0,
+        "seed": 53,
+        "sensor_range_m": 18.0
+      },
+      "log": "logs/L03.csv"
+    },
+    {
+      "id": "L04",
+      "build": "2.3.0",
+      "text": "In the parking the car did not brake automatically at 8 km/h and bumped the wall.",
+      "expected": {
+        "class": "system_limitation",
+        "symptom": "no_braking"
+      },
+      "scenario": {
+        "ego_kmh": 8.0,
+        "target": "stationary",
+        "gap_m": 6.0,
+        "duration_s": 10.0,
+        "seed": 54
+      },
+      "log": "logs/L04.csv"
+    },
+    {
+      "id": "D01",
+      "build": "2.4.1-pilot",
+      "text": "After the automatic stop the car rolled forward and touched the car in front.",
+      "expected": {
+        "class": "implementation_defect",
+        "symptom": "moved_after_stop",
+        "rollback": "2.3.0"
+      },
+      "scenario": {
+        "ego_kmh": 30.0,
+        "target": "stationary",
+        "gap_m": 30.0,
+        "duration_s": 25.0,
+        "seed": 61
+      },
+      "log": "logs/D01.csv"
+    },
+    {
+      "id": "D02",
+      "build": "2.4.1-pilot",
+      "text": "Car crept forward after the emergency brake stopped it at 40 km/h.",
+      "expected": {
+        "class": "implementation_defect",
+        "symptom": "moved_after_stop",
+        "rollback": "2.3.0"
+      },
+      "scenario": {
+        "ego_kmh": 40.0,
+        "target": "stationary",
+        "gap_m": 45.0,
+        "duration_s": 25.0,
+        "seed": 62
+      },
+      "log": "logs/D02.csv"
+    },
+    {
+      "id": "D03",
+      "build": "2.4.2-pilot",
+      "text": "The car braked very hard by itself at 95 km/h on the highway.",
+      "expected": {
+        "class": "implementation_defect",
+        "symptom": "unexpected_braking",
+        "rollback": "2.3.0"
+      },
+      "scenario": {
+        "ego_kmh": 95.0,
+        "target": "stationary",
+        "gap_m": 160.0,
+        "duration_s": 25.0,
+        "seed": 63,
+        "driver_fcw_reaction_s": 1.6,
+        "driver_brake_mps2": 8.0
+      },
+      "log": "logs/D03.csv"
+    },
+    {
+      "id": "D04",
+      "build": "2.4.3-pilot",
+      "text": "The car ahead braked hard, our AEB braked too late and we hit it at low speed.",
+      "expected": {
+        "class": "implementation_defect",
+        "symptom": "no_braking",
+        "rollback": "2.3.0"
+      },
+      "scenario": {
+        "ego_kmh": 50.0,
+        "target": "braking",
+        "target_kmh": 50.0,
+        "gap_m": 12.0,
+        "target_decel_mps2": 6.0,
+        "target_brake_at_s": 1.0,
+        "duration_s": 15.0,
+        "seed": 64
+      },
+      "log": "logs/D04.csv"
+    },
+    {
+      "id": "R01",
+      "build": "2.5.0-pilot",
+      "text": "Car braked hard on its own at 100 km/h behind a slow truck.",
+      "expected": {
+        "class": "calibration_regression",
+        "symptom": "unexpected_braking",
+        "lever": "v_max_mps"
+      },
+      "scenario": {
+        "ego_kmh": 100.0,
+        "target": "moving",
+        "target_kmh": 40.0,
+        "gap_m": 150.0,
+        "duration_s": 20.0,
+        "seed": 71
+      },
+      "log": "logs/R01.csv"
+    },
+    {
+      "id": "I01",
+      "build": "2.3.0",
+      "text": "The car braked suddenly by itself at 50 km/h.",
+      "expected": {
+        "class": "insufficient_data",
+        "symptom": "unexpected_braking"
+      },
+      "scenario": {
+        "ego_kmh": 50.0,
+        "target": "none",
+        "driver_brake_at_s": 3.0,
+        "driver_brake_mps2": 7.0,
+        "duration_s": 8.0,
+        "seed": 81
+      },
+      "log": "logs/I01.csv"
+    },
+    {
+      "id": "I02",
+      "build": "2.3.0",
+      "text": "Braked for no reason at 75 km/h on the expressway.",
+      "expected": {
+        "class": "insufficient_data",
+        "symptom": "unexpected_braking",
+        "matching_build": "2.4.0"
+      },
+      "scenario": {
+        "ego_kmh": 75.0,
+        "target": "none",
+        "ghost_at_s": 3.0,
+        "ghost_duration_s": 0.11,
+        "ghost_distance_m": 24.0,
+        "duration_s": 8.0,
+        "seed": 82
+      },
+      "log": "logs/I02.csv",
+      "generated_with": "2.4.0"
+    },
+    {
+      "id": "I03",
+      "build": "2.4.0",
+      "text": "Car braked hard for no reason near the toll booth. No recording available.",
+      "expected": {
+        "class": "insufficient_data",
+        "symptom": "unexpected_braking",
+        "no_log": true
+      },
+      "scenario": null,
+      "log": null
+    }
+  ]
+}

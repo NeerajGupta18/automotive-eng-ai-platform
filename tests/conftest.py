@@ -1,4 +1,7 @@
+import os
 from pathlib import Path
+
+os.environ["AEAI_DOTENV"] = "0"          # a developer's .env (e.g. LLM_BACKEND=ollama) must not change test results
 
 import pytest
 from fastapi.testclient import TestClient

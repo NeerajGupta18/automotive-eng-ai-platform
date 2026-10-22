@@ -1,0 +1,25 @@
+# Non-secret settings (see .env.example for every option).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aeai-config
+  namespace: automotive-eng-ai
+  labels: {app.kubernetes.io/part-of: automotive-eng-ai}
+data:
+  DATA_DIR: /data
+  AUTH_MODE: enforced
+  LOG_FORMAT: json
+  RETRIEVAL_MODE: hybrid
+  EMBED_BACKEND: hash
+  VECTOR_BACKEND: numpy
+  LLM_BACKEND: openai_compat
+  OPENAI_BASE_URL: http://llm-gateway.ai-platform.svc.cluster.local/v1
+  OPENAI_MODEL: company-approved-model
+  PDF_PARSE_ISOLATION: "1"
+  # Phase 5: integrations stay in dry-run until you set this to "1" and configure the receivers
+  INTEGRATIONS_LIVE: "0"
+  INTEGRATION_DISPATCH_S: "30"
+  WEBHOOK_ALLOW_HOSTS: ""
+  JIRA_BASE_URL: ""
+  JIRA_PROJECT_KEY: ""
+  AGENT_MAX_STEPS: "25"

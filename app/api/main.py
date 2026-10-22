@@ -3,7 +3,10 @@ AUTH_MODE=off: the X-User header is trusted (development). AUTH_MODE=enforced: i
 every request passes RBAC (see app/api/security.py)."""
 from __future__ import annotations
 
+import logging
 import re
+import threading
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
@@ -32,8 +35,33 @@ class DecisionIn(BaseModel):
     comment: str = ""
 
 
+def _dispatch_loop(app: FastAPI, interval: int, stop: threading.Event) -> None:
+    """Phase 5: deliver webhook events in the background (INTEGRATION_DISPATCH_S > 0)."""
+    log = logging.getLogger("aeai.integration")
+    while not stop.wait(interval):
+        cont = app.state.container
+        if cont is None:                      # built on the first request
+            continue
+        try:
+            res = cont.integration.dispatch()
+            if any(res[k] for k in ("queued", "delivered", "retry", "failed")):
+                log.info(f"webhook dispatch {res}")
+        except Exception:                     # noqa: BLE001 - keep the loop alive; the next round retries
+            log.exception("webhook dispatch failed")
+
+
 def create_app(container: Container | None = None) -> FastAPI:
-    app = FastAPI(title="Automotive Engineering AI Platform", version="0.1.0")
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        from app.config import get_settings
+        interval = (app.state.container.settings if app.state.container else get_settings()).integration_dispatch_s
+        stop = threading.Event()
+        if interval > 0:
+            threading.Thread(target=_dispatch_loop, args=(app, interval, stop), daemon=True, name="integration-dispatch").start()
+        yield
+        stop.set()
+
+    app = FastAPI(title="Automotive Engineering AI Platform", version="0.1.0", lifespan=lifespan)
     app.state.container = container
 
     @app.exception_handler(NotFound)
@@ -60,6 +88,17 @@ def create_app(container: Container | None = None) -> FastAPI:
     from app.api import codereview as cr_api
     app.include_router(cr_api.router)
     app.include_router(cr_api.public)
+    from app.api import vuln as vuln_api, ota as ota_api, compliance as compliance_api
+    app.include_router(vuln_api.router)
+    app.include_router(ota_api.router)
+    app.include_router(compliance_api.router)
+    from app.api import adas as adas_api
+    app.include_router(adas_api.router)
+    from app.api import agent as agent_api, integration as integration_api
+    app.include_router(agent_api.router)
+    app.include_router(integration_api.router)
+    from app.api import field as field_api
+    app.include_router(field_api.router)
     from app.api import admin as admin_api, trace as trace_api
     app.include_router(admin_api.router)
     app.include_router(trace_api.router)
@@ -94,7 +133,8 @@ def create_app(container: Container | None = None) -> FastAPI:
         s = cont.settings
         out = {"status": "ok", "auth": s.auth_mode}
         if s.auth_mode != "enforced" or request.state.auth_user:          # configuration details only for authenticated callers
-            out.update({"llm": cont.llm.name, "embeddings": s.embed_backend, "vector_store": s.vector_backend})
+            out.update({"llm": cont.llm.name, "embeddings": s.embed_backend, "vector_store": s.vector_backend,
+                        "retrieval": s.retrieval_mode, "reranker": cont.reranker.name})
         return out
 
     # ------------------------------------------------------------ projects

@@ -1,0 +1,61 @@
+# Render Blueprint for the public demo.
+#   1. Push this repository to GitHub.
+#   2. Render Dashboard > New > Blueprint > connect the repository > Apply.
+#   3. Every push to the connected branch redeploys automatically.
+# Full walkthrough: docs/DEPLOY_RENDER.md
+#
+# One free web service runs everything: the FastAPI backend on 127.0.0.1:8000 (private), the demo
+# data seeded at start, and the Streamlit UI on Render's $PORT. The free disk is ephemeral, so the
+# demo resets to the seeded data on every restart or redeploy.
+services:
+  - type: web
+    name: automotive-eng-ai
+    runtime: python
+    plan: free
+    region: singapore
+    # Phase 4: also compile the AEB C code (and its test mutants) for software-in-the-loop runs; if the build
+    # image has no C compiler the app still works and runs campaigns on the Python model only
+    buildCommand: pip install -r requirements-render.txt && (python scripts/sil_run.py build --mutants || echo "SIL build skipped")
+    startCommand: bash scripts/render_start.sh
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: DATA_DIR
+        value: /tmp/aeai-storage
+      - key: DEMO_SEED
+        value: "1"
+      # Public demo with synthetic data only. Anyone with the URL can use it; restarts reset the data.
+      - key: AUTH_MODE
+        value: "off"
+      - key: RETRIEVAL_MODE
+        value: hybrid
+      - key: EMBED_BACKEND
+        value: hash
+      - key: VECTOR_BACKEND
+        value: numpy
+      # Hosted LLM through any OpenAI-compatible API (Groq shown). Leave the two values empty and the
+      # app uses the offline extractive answerer instead; it never fails to start because of the LLM.
+      - key: LLM_BACKEND
+        value: openai_compat
+      - key: OPENAI_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: OPENAI_MODEL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_TIMEOUT_S
+        value: "30"
+      - key: MAX_UPLOAD_MB
+        value: "10"
+      - key: LOG_FORMAT
+        value: json
+      # Parse PDFs in a short-lived child process: PyMuPDF's ~200 MB is released after each upload,
+      # which keeps the free 512 MB instance safe (measured with the demo data: API 270 MB -> 96 MB; whole app
+      # 451 MB -> 276 MB after visiting every page twice)
+      - key: PDF_PARSE_ISOLATION
+        value: "1"
+      # Phase 5: on the public demo, webhooks and Jira tickets are prepared and signed but never sent
+      # (anyone with the URL could otherwise make the server call arbitrary addresses)
+      - key: INTEGRATIONS_LIVE
+        value: "0"
+      - key: INTEGRATION_DISPATCH_S
+        value: "60"

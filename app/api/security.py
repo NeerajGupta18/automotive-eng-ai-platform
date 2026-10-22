@@ -18,8 +18,8 @@ from app.core.observability import clean_id
 
 log = logging.getLogger("aeai.access")
 PUBLIC = {"/health", "/ready", "/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"}
-APPROVE_RE = re.compile(r"(/decision|/accept-risk|/library/load)$|^/documents/[^/]+/status$")
-READ_POST_RE = re.compile(r"^/hld/query$|^/uds/specs/[^/]+/(validate|ask|run|detection-matrix)$")
+APPROVE_RE = re.compile(r"(/decision|/accept-risk|/library/load|/library/upload|/keys/[^/]+/revoke)$|^/documents/[^/]+/status$")
+READ_POST_RE = re.compile(r"^/hld/query$|^/uds/specs/[^/]+/(validate|ask|run|detection-matrix)$|^/adas/scenarios/[^/]+/run$")
 GLOBAL_ADMIN = ("/admin", "/metrics", "/system")
 AUTHENTICATED_REFERENCE = {"/hara/asil-table", "/tara/rules", "/uds/reference", "/codereview/rules", "/me"}
 
@@ -40,8 +40,8 @@ def classify(method: str, path: str) -> tuple[str, str | None]:
         if rest.startswith("/members") or rest == "/audit":
             return ("admin" if rest.startswith("/members") else "approve"), project
         return "read", project
-    if method == "DELETE" or rest.startswith("/members"):
-        return "admin", project
+    if method == "DELETE" or rest.startswith("/members") or rest.startswith("/integrations/webhooks"):
+        return "admin", project                         # webhooks send project data out: project administrators only
     if APPROVE_RE.search(rest):
         return "approve", project
     if READ_POST_RE.match(rest):

@@ -1,0 +1,14 @@
+# Lightweight runtime for the cloud demo (Render free instance, 512 MB) and the CI quality gate.
+# No ChromaDB / sentence-transformers: the demo uses the NumPy store, hash embeddings and hybrid
+# keyword+vector retrieval, which need no model downloads.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pydantic>=2.6
+requests>=2.31
+numpy>=1.26
+pandas>=2.0
+pymupdf>=1.24
+streamlit>=1.50
+# Phase 2: ECDSA P-256 signatures for OTA update packages
+cryptography>=42

@@ -14,3 +14,12 @@ venv/
 .idea/
 .vscode/
 .DS_Store
+# local evaluation output (CI uploads it as an artifact)
+eval-ci/
+# compiled SIL libraries and CI validation reports (rebuilt from firmware/ on demand)
+build/
+sil-report/
+
+# OTA signing keys: never commit private keys
+keys/
+*.private.pem

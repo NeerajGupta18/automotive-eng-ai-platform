@@ -67,7 +67,7 @@ def dot(db: Database, project: str, ref: str | None = None) -> str:
         tr = Trace(db)
         keep = {ref} | set(tr.ancestors(project, ref)) | set(tr.descendants(project, ref))
         links = [l for l in links if l["src"] in keep and l["dst"] in keep]
-    colors = {"hara": "#fde2e2", "tara": "#e2e8fd", "uds": "#e2fdea", "codereview": "#fdf5e2", "external": "#eeeeee"}
+    colors = {"hara": "#fde2e2", "tara": "#e2e8fd", "uds": "#e2fdea", "codereview": "#fdf5e2", "vuln": "#fde2f5", "ota": "#e2f7fd", "adas": "#ebe2fd", "external": "#eeeeee"}
     nodes = {n for l in links for n in (l["src"], l["dst"])}
     out = ["digraph trace {", "  rankdir=LR; node [shape=box, style=\"rounded,filled\", fontsize=10];"]
     for n in sorted(nodes):

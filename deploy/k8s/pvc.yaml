@@ -1,0 +1,12 @@
+# SQLite database, vector store and uploads. One writer: the API runs as a single replica (see README).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aeai-data
+  namespace: automotive-eng-ai
+  labels: {app.kubernetes.io/part-of: automotive-eng-ai}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi

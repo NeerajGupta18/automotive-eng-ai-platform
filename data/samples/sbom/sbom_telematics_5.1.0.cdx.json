@@ -1,0 +1,115 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "serialNumber": "urn:uuid:3f1a2b4c-0000-4000-8000-000000000510",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-10-01T09:00:00Z",
+  "component": {
+   "type": "firmware",
+   "name": "Telematics",
+   "version": "5.1.0",
+   "bom-ref": "telematics-fw",
+   "properties": [
+    {
+     "name": "aeai:hardware_id",
+     "value": "TCU-HW-A"
+    },
+    {
+     "name": "aeai:rxswin",
+     "value": "RXSWIN-TCU-0051"
+    }
+   ]
+  },
+  "supplier": {
+   "name": "Synthetic demo OEM"
+  }
+ },
+ "components": [
+  {
+   "type": "library",
+   "name": "openssl",
+   "version": "1.0.1e",
+   "bom-ref": "openssl@1.0.1e",
+   "purl": "pkg:generic/openssl@1.0.1e",
+   "supplier": {
+    "name": "OpenSSL Project"
+   },
+   "licenses": [
+    {
+     "license": {
+      "id": "OpenSSL"
+     }
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "name": "curl",
+   "version": "7.68.0",
+   "bom-ref": "curl@7.68.0",
+   "purl": "pkg:generic/curl@7.68.0",
+   "supplier": {
+    "name": "curl project"
+   },
+   "licenses": [
+    {
+     "license": {
+      "id": "curl"
+     }
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "name": "zlib",
+   "version": "1.2.13",
+   "bom-ref": "zlib@1.2.13",
+   "purl": "pkg:generic/zlib@1.2.13",
+   "supplier": {
+    "name": "zlib project"
+   },
+   "licenses": [
+    {
+     "license": {
+      "id": "Zlib"
+     }
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "name": "busybox",
+   "version": "1.36.1",
+   "bom-ref": "busybox@1.36.1",
+   "purl": "pkg:generic/busybox@1.36.1",
+   "supplier": {
+    "name": "BusyBox project"
+   },
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "name": "linux-kernel",
+   "version": "5.10.120",
+   "bom-ref": "linux-kernel@5.10.120",
+   "purl": "pkg:generic/linux-kernel@5.10.120",
+   "supplier": {
+    "name": "Linux kernel"
+   },
+   "licenses": [
+    {
+     "license": {
+      "id": "GPL-2.0-only"
+     }
+    }
+   ]
+  }
+ ]
+}

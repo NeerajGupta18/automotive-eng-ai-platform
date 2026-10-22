@@ -2,3 +2,7 @@
 pytest>=8.0
 httpx>=0.27
 reportlab>=4.0
+# Phase 5 interoperability tests only (not needed to run the platform):
+#   reqif ships the official OMG ReqIF XSD and an independent parser; mcp is the official MCP Python SDK client
+reqif==0.1.0
+mcp>=1.25,<2

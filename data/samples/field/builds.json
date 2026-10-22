@@ -1,0 +1,82 @@
+{
+  "note": "Synthetic AEB software builds in the field (demo).",
+  "builds": [
+    {
+      "version": "2.3.0",
+      "ecu": "AEB",
+      "firmware": "reference",
+      "calibration": {},
+      "vehicles": 41200,
+      "released_at": "2025-11-03",
+      "validated": true,
+      "validation_evidence": "SIL release campaign before start of production (V&V report AEB-VR-230)",
+      "previous": null,
+      "notes": "Start-of-production software"
+    },
+    {
+      "version": "2.4.0",
+      "ecu": "AEB",
+      "firmware": "reference",
+      "calibration": {
+        "confirm_cycles": 5,
+        "ttc_warn_s": 2.8
+      },
+      "vehicles": 18500,
+      "released_at": "2026-07-15",
+      "validated": false,
+      "validation_evidence": "calibration-only update over the air; the SIL regression campaign was not re-run",
+      "previous": "2.3.0",
+      "notes": "Faster object confirmation for cut-ins and an earlier forward collision warning"
+    },
+    {
+      "version": "2.4.1-pilot",
+      "ecu": "AEB",
+      "firmware": "M04",
+      "calibration": {},
+      "vehicles": 950,
+      "released_at": "2026-08-20",
+      "validated": false,
+      "validation_evidence": "pilot fleet; unit tests only",
+      "previous": "2.3.0",
+      "notes": "Refactored standstill hold logic (pilot fleet). Stands for a coding defect: predefined variant M04"
+    },
+    {
+      "version": "2.4.2-pilot",
+      "ecu": "AEB",
+      "firmware": "M11",
+      "calibration": {},
+      "vehicles": 620,
+      "released_at": "2026-08-27",
+      "validated": false,
+      "validation_evidence": "pilot fleet; unit tests only",
+      "previous": "2.3.0",
+      "notes": "Refactored speed-window checks (pilot fleet). Stands for a coding defect: predefined variant M11"
+    },
+    {
+      "version": "2.4.3-pilot",
+      "ecu": "AEB",
+      "firmware": "M03",
+      "calibration": {},
+      "vehicles": 480,
+      "released_at": "2026-09-02",
+      "validated": false,
+      "validation_evidence": "pilot fleet; unit tests only",
+      "previous": "2.3.0",
+      "notes": "Simplified required-deceleration computation (pilot fleet). Stands for a coding defect: predefined variant M03"
+    },
+    {
+      "version": "2.5.0-pilot",
+      "ecu": "AEB",
+      "firmware": "reference",
+      "calibration": {
+        "v_max_mps": 30.56
+      },
+      "vehicles": 400,
+      "released_at": "2026-09-10",
+      "validated": false,
+      "validation_evidence": "pilot: activation window extended to 110 km/h, not yet validated",
+      "previous": "2.3.0",
+      "notes": "AEB braking up to 110 km/h (pilot fleet)"
+    }
+  ]
+}

@@ -74,15 +74,34 @@ with tabs[1]:
                                              json={"question": q, "k": k, "include_draft": draft})
     a = st.session_state.get("answer")
     if a:
+        r = a.get("retrieval") or {}
+        reasons = {"low_coverage": "the question's key terms do not appear in the approved documents",
+                   "llm_insufficient": "the model found no statement in the retrieved sections that answers it",
+                   "no_evidence": "nothing relevant was retrieved", "low_similarity": "the best match was too weak",
+                   "no_documents": "there are no approved documents"}
         if a["refused"]:
             st.warning(a["answer"])
+            if a.get("refusal_reason"):
+                st.caption(f"Why: {reasons.get(a['refusal_reason'], a['refusal_reason'])}"
+                           + (f" — not found: *{', '.join(r['missing_terms'])}*" if r.get("missing_terms") else ""))
         else:
+            if a.get("degraded"):
+                st.error("The configured LLM did not respond; this answer was produced by the extractive fallback.")
             st.markdown(a["answer"])
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Top similarity", a["confidence"])
+            m1, m2, m3, m4 = st.columns(4)
+            if r.get("mode") == "hybrid":
+                m1.metric("Question coverage", f"{(r.get('coverage') or 0) * 100:.0f}%",
+                          help="Share of the question's key terms found in the approved documents")
+            else:
+                m1.metric("Top similarity", a["confidence"])
             m2.metric("Confidence", a["confidence_label"])
             m3.metric("Citations valid", "yes" if a["grounded"] else "NO – verify")
-            st.caption("Status: **needs engineer review** — verify against the cited sections before use.")
+            m4.metric("Cited sentences supported", f"{a.get('support_rate', 1) * 100:.0f}%",
+                      help="Share of cited sentences whose words actually appear in the section they cite")
+            st.caption(f"Status: **needs engineer review** — verify against the cited sections before use. "
+                       f"Retrieval: {r.get('mode', 'vector')}"
+                       + (f" · {r['duplicates_removed']} duplicate sections from other document versions hidden" if r.get("duplicates_removed") else "")
+                       + f" · LLM: {a.get('llm', '?')} · {a.get('latency_ms', 0):.0f} ms")
             for c in a["citations"]:
                 with st.expander(f"[{c['label']}] {c['doc_name']} v{c['version']} · p.{c['page']} · {c['section']}  (score {c['score']})"):
                     st.code(c["snippet"], language="markdown")

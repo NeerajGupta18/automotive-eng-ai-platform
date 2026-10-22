@@ -1,0 +1,53 @@
+{
+  "note": "Synthetic dealer complaints with event recordings (demo).",
+  "complaints": [
+    {
+      "text": "Car braked hard on its own under the flyover near Chakan on the Pune-Nashik highway at around 80 km/h. Nothing was in front of us. Very scary, the truck behind had to brake and honked.",
+      "vin": "MA1DEMO0AEB000117",
+      "build": "2.4.0",
+      "reported_at": "2026-09-14T08:12:44+05:30",
+      "dealer": "Pune Central Service",
+      "log": "logs/fc_chakan_flyover.csv"
+    },
+    {
+      "text": "Sudden jerk and automatic braking while crossing a bridge expansion joint, approx 70 kmph. No vehicle ahead.",
+      "vin": "MA1DEMO0AEB000342",
+      "build": "2.4.0",
+      "reported_at": "2026-09-18T19:40:02+05:30",
+      "dealer": "Nashik Road Motors",
+      "log": "logs/fc_bridge_joint.csv"
+    },
+    {
+      "text": "Emergency brake activated for no reason on the expressway near a metal plate on the road. Speed was 65 km/h.",
+      "vin": "MA1DEMO0AEB000561",
+      "build": "2.4.0",
+      "reported_at": "2026-09-22T07:05:51+05:30",
+      "dealer": "Pune Central Service",
+      "log": "logs/fc_metal_plate.csv"
+    },
+    {
+      "text": "Phantom braking twice this week at night on the Mumbai-Pune Expressway near the toll gantry, about 75 km/h. The car behind nearly hit us.",
+      "vin": "MA1DEMO0AEB000809",
+      "build": "2.4.0",
+      "reported_at": "2026-09-27T22:31:10+05:30",
+      "dealer": "Lonavala Auto Care",
+      "log": "logs/fc_toll_gantry.csv"
+    },
+    {
+      "text": "The car slammed the brakes by itself near the toll plaza queue at about 45 km/h. I was about to brake anyway. The system is too aggressive.",
+      "vin": "MA1DEMO0AEB001204",
+      "build": "2.3.0",
+      "reported_at": "2026-10-02T17:48:33+05:30",
+      "dealer": "Pune Central Service",
+      "log": "logs/fc_toll_queue.csv"
+    },
+    {
+      "text": "After the automatic emergency stop in slow traffic the car rolled forward on its own and touched the car in front. Pilot fleet vehicle.",
+      "vin": "MA1DEMO0AEB002077",
+      "build": "2.4.1-pilot",
+      "reported_at": "2026-10-05T10:22:09+05:30",
+      "dealer": "Hinjewadi Fleet Service",
+      "log": "logs/fc_rolled_forward.csv"
+    }
+  ]
+}
